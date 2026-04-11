@@ -2,57 +2,60 @@
  * compressor.js — browser-side H.264 video compression via FFmpeg.wasm
  * Two-pass encoding: pass 1 ultrafast (analysis), pass 2 with chosen quality preset.
  * Single-threaded core — no SharedArrayBuffer / COOP/COEP headers required.
+ *
+ * FFmpeg files are self-hosted under v2/lib/ffmpeg/ (downloaded at Netlify build time).
+ * This avoids the cross-origin Worker restriction that blocks CDN-served scripts.
+ * The build command in netlify.toml downloads the exact versions below.
  */
 
-const FFMPEG_CDN  = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js';
-const WORKER_CDN  = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/worker.js';
-const UTIL_CDN    = 'https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/esm/index.js';
-const CORE_JS     = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.js';
-const CORE_WASM   = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.wasm';
+// Resolve relative to this module's own URL so it works under any base path.
+const LIB = new URL('./lib/ffmpeg/', import.meta.url).href;
 
-const BITRATE_PRESETS = [1500, 2000, 2250, 2500, 3000, 5000];
-const SIZE_PRESETS    = [3, 5, 10, 15, 20, 30]; // MB
-const QUALITY_MAP     = { low: 'fast', medium: 'medium', high: 'slow' };
+
+const BITRATE_PRESETS    = [1500, 2000, 2250, 2500, 3000, 5000];
+const SIZE_PRESETS       = [3, 5, 10, 15, 20, 30]; // MB
+const QUALITY_MAP        = { low: 'fast', medium: 'medium', high: 'slow' };
 const ASSUMED_AUDIO_KBPS = 128;
 
 export function initCompressor() {
   // ── DOM refs ────────────────────────────────────────────────────────────
-  const dropzone          = document.getElementById('cmp-dropzone');
-  const fileInput         = document.getElementById('cmp-file-input');
-  const infoBox           = document.getElementById('cmp-info');
-  const bitrateSection    = document.getElementById('cmp-bitrate-section');
-  const sizeSection       = document.getElementById('cmp-size-section');
-  const bitrateChips      = document.getElementById('cmp-bitrate-chips');
-  const sizeChips         = document.getElementById('cmp-size-chips');
-  const customBitrateWrap = document.getElementById('cmp-custom-bitrate-wrap');
+  const dropzone           = document.getElementById('cmp-dropzone');
+  const fileInput          = document.getElementById('cmp-file-input');
+  const infoBox            = document.getElementById('cmp-info');
+  const bitrateSection     = document.getElementById('cmp-bitrate-section');
+  const sizeSection        = document.getElementById('cmp-size-section');
+  const bitrateChips       = document.getElementById('cmp-bitrate-chips');
+  const sizeChips          = document.getElementById('cmp-size-chips');
+  const customBitrateWrap  = document.getElementById('cmp-custom-bitrate-wrap');
   const customBitrateInput = document.getElementById('cmp-custom-bitrate');
-  const customSizeWrap    = document.getElementById('cmp-custom-size-wrap');
-  const customSizeInput   = document.getElementById('cmp-custom-size');
-  const estSizeEl         = document.getElementById('cmp-est-size');
-  const qualityChips      = document.getElementById('cmp-quality-chips');
-  const compressBtn       = document.getElementById('cmp-compress-btn');
-  const progressWrap      = document.getElementById('cmp-progress-wrap');
-  const progressBar       = document.getElementById('cmp-progress-bar');
-  const progressLabel     = document.getElementById('cmp-progress-label');
-  const cancelBtn         = document.getElementById('cmp-cancel-btn');
+  const customSizeWrap     = document.getElementById('cmp-custom-size-wrap');
+  const customSizeInput    = document.getElementById('cmp-custom-size');
+  const estSizeEl          = document.getElementById('cmp-est-size');
+  const qualityChips       = document.getElementById('cmp-quality-chips');
+  const compressBtn        = document.getElementById('cmp-compress-btn');
+  const progressWrap       = document.getElementById('cmp-progress-wrap');
+  const progressBar        = document.getElementById('cmp-progress-bar');
+  const progressLabel      = document.getElementById('cmp-progress-label');
+  const cancelBtn          = document.getElementById('cmp-cancel-btn');
 
   // ── State ────────────────────────────────────────────────────────────────
-  let sourceFile      = null;
-  let sourceDuration  = 0;
-  let selectedBitrate = BITRATE_PRESETS[1]; // 2000 kbps
-  let selectedSizeMB  = SIZE_PRESETS[2];    // 10 MB
-  let selectedQuality = 'medium';
-  let ffmpegInstance  = null;
-  let fetchFileUtil   = null;   // set once on first load
-  let encoding        = false;
-  let currentPass     = 1;
-  let startTime       = 0;
-  let timerInterval   = null;
+  let sourceFile       = null;
+  let sourceDuration   = 0;
+  let selectedBitrate  = BITRATE_PRESETS[1]; // 2000 kbps
+  let selectedSizeMB   = SIZE_PRESETS[2];    // 10 MB
+  let selectedQuality  = 'medium';
+  let ffmpegInstance   = null;
+  let fetchFileUtil    = null;
+  let loadPromise      = null; // shared across calls so we only load once
+  let encoding         = false;
+  let currentPass      = 1;
+  let startTime        = 0;
+  let timerInterval    = null;
 
   // ── Build bitrate chips ──────────────────────────────────────────────────
   BITRATE_PRESETS.forEach(kbps => {
     const btn = document.createElement('button');
-    btn.type = 'button';
+    btn.type      = 'button';
     btn.className = 'chip' + (kbps === selectedBitrate ? ' active' : '');
     btn.textContent = kbps.toLocaleString('en') + ' kbps';
     btn.addEventListener('click', () => {
@@ -83,7 +86,7 @@ export function initCompressor() {
   // ── Build size chips ─────────────────────────────────────────────────────
   SIZE_PRESETS.forEach(mb => {
     const btn = document.createElement('button');
-    btn.type = 'button';
+    btn.type      = 'button';
     btn.className = 'chip' + (mb === selectedSizeMB ? ' active' : '');
     btn.textContent = mb + ' MB';
     btn.addEventListener('click', () => {
@@ -114,7 +117,7 @@ export function initCompressor() {
   ['Low', 'Medium', 'High'].forEach(label => {
     const key = label.toLowerCase();
     const btn = document.createElement('button');
-    btn.type = 'button';
+    btn.type      = 'button';
     btn.className = 'chip' + (key === selectedQuality ? ' active' : '');
     btn.textContent = label;
     btn.addEventListener('click', () => {
@@ -197,39 +200,43 @@ export function initCompressor() {
     estSizeEl.textContent = 'Estimated output: ~' + mb + ' MB';
   }
 
-  // ── Lazy-load FFmpeg ──────────────────────────────────────────────────────
-  async function ensureFFmpeg() {
-    if (ffmpegInstance) return ffmpegInstance;
+  // ── Lazy-load FFmpeg (returns shared promise so we only load once) ────────
+  // Files are self-hosted under v2/lib/ffmpeg/ — same-origin, so the Worker
+  // can be spawned without any cross-origin restrictions or blob: wrapping.
+  function startLoad() {
+    if (loadPromise) return loadPromise;
+    loadPromise = (async () => {
+      const [{ FFmpeg }, { fetchFile }] = await Promise.all([
+        import(LIB + 'index.js'),
+        import(LIB + 'util.js'),
+      ]);
+      fetchFileUtil = fetchFile;
 
-    setProgress(0, 'Loading encoder (~30 MB, cached after first use)…');
+      const ff = new FFmpeg();
 
-    const [{ FFmpeg }, { fetchFile, toBlobURL }] = await Promise.all([
-      import(FFMPEG_CDN),
-      import(UTIL_CDN),
-    ]);
-    fetchFileUtil = fetchFile;
+      ff.on('progress', ({ progress }) => {
+        const pct = Math.round(Math.min(Math.max(progress, 0), 1) * 100);
+        const cur = currentPass === 1 ? Math.round(pct * 0.4) : 40 + Math.round(pct * 0.6);
+        const lbl = currentPass === 1 ? 'Pass 1 of 2 — analysing…' : 'Pass 2 of 2 — encoding…';
+        setProgress(cur, lbl);
+      });
 
-    const ff = new FFmpeg();
-    // All three URLs must be blob: so the browser treats them as same-origin.
-    // Without classWorkerURL, the Worker is spawned from the CDN URL which
-    // browsers block as cross-origin.
-    const [coreURL, wasmURL, workerURL] = await Promise.all([
-      toBlobURL(CORE_JS,    'text/javascript'),
-      toBlobURL(CORE_WASM,  'application/wasm'),
-      toBlobURL(WORKER_CDN, 'text/javascript'),
-    ]);
-    await ff.load({ coreURL, wasmURL, classWorkerURL: workerURL });
-
-    ff.on('progress', ({ progress }) => {
-      const pct = Math.round(Math.min(Math.max(progress, 0), 1) * 100);
-      const cur  = currentPass === 1 ? Math.round(pct * 0.4) : 40 + Math.round(pct * 0.6);
-      const lbl  = currentPass === 1 ? 'Pass 1 of 2 — analysing…' : 'Pass 2 of 2 — encoding…';
-      setProgress(cur, lbl);
-    });
-
-    ffmpegInstance = ff;
-    return ff;
+      // worker.js is same-origin so FFmpeg's default Worker spawn works fine.
+      // No classWorkerURL needed.
+      await ff.load({
+        coreURL: LIB + 'ffmpeg-core.js',
+        wasmURL: LIB + 'ffmpeg-core.wasm',
+      });
+      ffmpegInstance = ff;
+      return ff;
+    })();
+    return loadPromise;
   }
+
+  // ── Pre-warm: start loading when the tab is first clicked ────────────────
+  document.querySelector('.tab-btn[data-tab="compress"]')?.addEventListener('click', () => {
+    if (!loadPromise) startLoad().catch(() => { loadPromise = null; });
+  }, { once: true });
 
   // ── Compress ─────────────────────────────────────────────────────────────
   compressBtn.addEventListener('click', startCompress);
@@ -258,19 +265,18 @@ export function initCompressor() {
     encoding = true;
     compressBtn.disabled = true;
     progressWrap.style.display = '';
-    setProgress(0, 'Preparing…');
+    setProgress(0, 'Loading encoder…');
     startTime = Date.now();
     timerInterval = setInterval(updateTimer, 500);
 
     try {
-      const ff = await ensureFFmpeg();
+      const ff = await startLoad();
 
-      // Write source into WASM virtual FS
-      setProgress(0, 'Pass 1 of 2 — analysing…');
       await ff.writeFile('input.mp4', await fetchFileUtil(sourceFile));
 
       // Pass 1 — turbo analysis
       currentPass = 1;
+      setProgress(0, 'Pass 1 of 2 — analysing…');
       await ff.exec([
         '-y', '-i', 'input.mp4',
         '-c:v', 'libx264', '-b:v', videoBitrateKbps + 'k',
@@ -291,7 +297,6 @@ export function initCompressor() {
         'output.mp4',
       ]);
 
-      // Download result
       const data     = await ff.readFile('output.mp4');
       const blob     = new Blob([data.buffer], { type: 'video/mp4' });
       const url      = URL.createObjectURL(blob);
@@ -306,13 +311,14 @@ export function initCompressor() {
       setTimeout(() => { progressWrap.style.display = 'none'; }, 2500);
 
     } catch (err) {
-      const msg = (err?.message || String(err));
-      if (msg.includes('exit') || msg.includes('abort') || msg.includes('terminated')) {
+      const msg = err?.message || String(err);
+      if (/exit|abort|terminat/i.test(msg)) {
         setProgress(0, 'Cancelled.');
       } else {
         console.error('[compressor]', err);
         setProgress(0, 'Error: ' + msg);
       }
+      loadPromise = null; // allow retry
       setTimeout(() => { progressWrap.style.display = 'none'; }, 3000);
     } finally {
       clearInterval(timerInterval);
@@ -326,6 +332,7 @@ export function initCompressor() {
       ffmpegInstance.terminate();
       ffmpegInstance = null;
       fetchFileUtil  = null;
+      loadPromise    = null; // allow retry after cancel
     }
   });
 
