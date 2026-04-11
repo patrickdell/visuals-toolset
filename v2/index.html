@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aspect Ratio Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Extra layout bits that reference element IDs */
+    .canvas-wrap { display: none; }
+    .dropzone.hidden { display: none; }
+
+    #customResWrap { display: none; align-items: center; gap: 6px; margin-top: 6px; }
+
+    /* Sidebar crop info box */
+    .info-box {
+      background: #0c0f14;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    /* Version pill */
+    .ver-pill {
+      font-size: 11px;
+      background: var(--line);
+      border-radius: 999px;
+      padding: 2px 8px;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .v1-link { font-size: 12px; color: var(--muted); text-decoration: none; }
+    .v1-link:hover { color: var(--ink); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header / tabs ───────────────────────────────────────────── -->
+  <header class="app-header">
+    <h1 class="app-title">Aspect Ratio Calculator</h1>
+    <nav class="tabs">
+      <button class="tab-btn" data-tab="calc">Calculator</button>
+      <button class="tab-btn" data-tab="crop">Crop &amp; Export</button>
+    </nav>
+    <span class="ver-pill">v2</span>
+    <a class="v1-link" href="/v1/index.html">v1 &rarr;</a>
+  </header>
+
+  <!-- ── Calculator panel ────────────────────────────────────────── -->
+  <section id="panel-calc">
+    <div class="wrap">
+      <div class="card">
+
+        <p class="chips-label">Aspect ratio</p>
+        <div id="calcChips" class="chip-row"></div>
+
+        <div class="calc-grid">
+          <div class="field">
+            <label for="calcWidth">Width (px)</label>
+            <input id="calcWidth" type="number" min="1" placeholder="e.g. 1080" />
+            <div id="calcWErr" class="err-msg"></div>
+          </div>
+          <div class="flip-wrap">
+            <button id="calcFlip" class="icon-btn" title="Flip width / height">&#8646;</button>
+          </div>
+          <div class="field">
+            <label for="calcHeight">Height (px)</label>
+            <input id="calcHeight" type="number" min="1" placeholder="e.g. 1350" />
+            <div id="calcHErr" class="err-msg"></div>
+          </div>
+        </div>
+
+        <div class="calc-result">
+          <div id="calcResult" class="result-value">&mdash;</div>
+          <div id="calcMeta"   class="result-meta"></div>
+        </div>
+
+        <div class="btn-row">
+          <button id="calcReset" class="text-btn">Reset</button>
+        </div>
+
+      </div><!-- /card -->
+
+      <!-- Reference visual -->
+      <div class="reference-visual">
+        <h3>Shape reference</h3>
+        <img src="assets/ratio-reference.svg"
+             alt="Five phone mockups showing 3:2, 4:3, 1:1, 4:5 and 2:3 crop boxes" />
+      </div>
+
+    </div><!-- /wrap -->
+  </section>
+
+  <!-- ── Crop & Export panel ──────────────────────────────────────── -->
+  <section id="panel-crop">
+    <div class="wrap">
+      <div class="crop-layout">
+
+        <!-- Left: canvas / dropzone -->
+        <div>
+          <!-- Drop zone (shown when no image loaded) -->
+          <div id="dropzone" class="dropzone card">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <div>Drop an image here, or click to browse</div>
+            <div class="dropzone-hint">Supports JPEG, PNG, WebP &mdash; EXIF orientation handled automatically</div>
+            <input id="fileInput" type="file" accept="image/*" hidden />
+          </div>
+
+          <!-- Canvas (shown after image loaded) -->
+          <div class="canvas-wrap card" style="padding:0;">
+            <canvas id="cropCanvas" height="500"></canvas>
+          </div>
+
+          <div id="sizeWarn" class="size-warn">
+            Source image is smaller than 1080 px on the short side &mdash; exported file may look soft at large sizes.
+          </div>
+        </div>
+
+        <!-- Right: sidebar -->
+        <aside class="sidebar">
+
+          <div class="card sidebar-section">
+            <p class="sidebar-label chips-label">Aspect ratio</p>
+            <div id="cropChips" class="chip-row"></div>
+          </div>
+
+          <div class="card sidebar-section">
+            <p class="sidebar-label chips-label">Output resolution (long edge)</p>
+            <div class="res-options">
+              <label class="res-option">
+                <input type="radio" name="resolution" value="1080" checked /> 1080 px
+              </label>
+              <label class="res-option">
+                <input type="radio" name="resolution" value="1500" /> 1500 px
+              </label>
+              <label class="res-option">
+                <input type="radio" name="resolution" value="2160" /> 2160 px
+              </label>
+              <label class="res-option">
+                <input type="radio" name="resolution" value="4320" /> 4320 px
+              </label>
+              <label class="res-option">
+                <input type="radio" name="resolution" value="custom" /> Custom&hellip;
+              </label>
+            </div>
+            <div id="customResWrap" class="custom-res-wrap">
+              <input id="customRes" type="number" min="1" max="20000" placeholder="px" />
+              <span>px long edge</span>
+            </div>
+          </div>
+
+          <div class="card sidebar-section">
+            <p class="sidebar-label chips-label">Source crop size</p>
+            <div class="info-box crop-info">
+              <span id="cropInfoW">&mdash;</span> &times; <span id="cropInfoH">&mdash;</span> px
+            </div>
+          </div>
+
+          <div class="sidebar-section">
+            <button id="exportPng" class="export-btn" disabled>Export PNG</button>
+            <button id="exportJpg" class="export-btn-secondary" disabled>Export JPEG (92%)</button>
+          </div>
+
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
