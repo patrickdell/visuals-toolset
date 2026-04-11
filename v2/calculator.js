@@ -69,6 +69,8 @@ export function initCalculator({ onRatioChange }) {
     }
 
     resultEl.textContent = W + ' \xd7 ' + H + ' px';
+    resultEl.dataset.copy = W + ' × ' + H + ' px';
+    resultEl.classList.add('copyable');
     metaEl.textContent = 'Ratio ' + currentPreset.label + ' \u2014 multiply by any factor to scale up';
   }
 
@@ -109,7 +111,22 @@ export function initCalculator({ onRatioChange }) {
     heightEl.value = '';
     lock(null);
     resultEl.textContent = '\u2014';
+    resultEl.classList.remove('copyable');
     metaEl.textContent = '';
+  });
+
+  resultEl.addEventListener('click', () => {
+    const text = resultEl.dataset.copy;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const prev = resultEl.textContent;
+      resultEl.textContent = 'Copied!';
+      resultEl.classList.add('copied');
+      setTimeout(() => {
+        resultEl.textContent = prev;
+        resultEl.classList.remove('copied');
+      }, 1200);
+    });
   });
 
   /** Called by app.js when the shared ratio changes */

@@ -31,6 +31,7 @@ export function initCropper({ onCropChange }) {
     sourceBuffer: null, // original file ArrayBuffer for EXIF passthrough
     ratio:    { w: 3, h: 2 },
     crop:     { x: 0, y: 0, w: 0, h: 0 }, // image-space
+    history:  [], // undo stack of crop snapshots
     // Computed each render from canvas CSS size:
     scale:    1,   // canvas-buffer pixels per image pixel
     offX:     0,   // letterbox offset X in canvas-buffer pixels
@@ -246,8 +247,21 @@ export function initCropper({ onCropChange }) {
   canvas.addEventListener('pointerup',    endDrag);
   canvas.addEventListener('pointercancel', endDrag);
 
+  function pushHistory(cropSnapshot) {
+    state.history.push({ ...cropSnapshot });
+    if (state.history.length > 30) state.history.shift();
+  }
+
   function endDrag(e) {
-    state.drag = null; // notifyCropChange() already called during render() on each pointermove
+    if (state.drag) {
+      const d = state.drag;
+      // Only record history if crop actually moved
+      if (d.origCrop.x !== state.crop.x || d.origCrop.y !== state.crop.y ||
+          d.origCrop.w !== state.crop.w || d.origCrop.h !== state.crop.h) {
+        pushHistory(d.origCrop);
+      }
+      state.drag = null;
+    }
   }
 
   function cursorForHandle(id) {
@@ -435,11 +449,22 @@ export function initCropper({ onCropChange }) {
     onCropChange && onCropChange(state.crop);
   }
 
+  // ── Undo (Ctrl+Z / Cmd+Z) ────────────────────────────────────────────────
+
+  document.addEventListener('keydown', e => {
+    if (!state.loaded || state.history.length === 0) return;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      e.preventDefault();
+      state.crop = state.history.pop();
+      render();
+    }
+  });
+
   // ── Public API ────────────────────────────────────────────────────────────
 
   function setRatio(preset) {
     state.ratio = { w: preset.w, h: preset.h };
-    if (state.loaded) { fitCrop(); render(); }
+    if (state.loaded) { pushHistory(state.crop); fitCrop(); render(); }
   }
 
   function getCropState() {
