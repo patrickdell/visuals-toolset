@@ -4,10 +4,11 @@
  * Single-threaded core — no SharedArrayBuffer / COOP/COEP headers required.
  */
 
-const FFMPEG_CDN = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js';
-const UTIL_CDN   = 'https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/esm/index.js';
-const CORE_JS    = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.js';
-const CORE_WASM  = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.wasm';
+const FFMPEG_CDN  = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/index.js';
+const WORKER_CDN  = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/dist/esm/worker.js';
+const UTIL_CDN    = 'https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/dist/esm/index.js';
+const CORE_JS     = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.js';
+const CORE_WASM   = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.wasm';
 
 const BITRATE_PRESETS = [1500, 2000, 2250, 2500, 3000, 5000];
 const SIZE_PRESETS    = [3, 5, 10, 15, 20, 30]; // MB
@@ -209,9 +210,15 @@ export function initCompressor() {
     fetchFileUtil = fetchFile;
 
     const ff = new FFmpeg();
-    const coreURL = await toBlobURL(CORE_JS,   'text/javascript');
-    const wasmURL = await toBlobURL(CORE_WASM, 'application/wasm');
-    await ff.load({ coreURL, wasmURL });
+    // All three URLs must be blob: so the browser treats them as same-origin.
+    // Without classWorkerURL, the Worker is spawned from the CDN URL which
+    // browsers block as cross-origin.
+    const [coreURL, wasmURL, workerURL] = await Promise.all([
+      toBlobURL(CORE_JS,    'text/javascript'),
+      toBlobURL(CORE_WASM,  'application/wasm'),
+      toBlobURL(WORKER_CDN, 'text/javascript'),
+    ]);
+    await ff.load({ coreURL, wasmURL, classWorkerURL: workerURL });
 
     ff.on('progress', ({ progress }) => {
       const pct = Math.round(Math.min(Math.max(progress, 0), 1) * 100);
