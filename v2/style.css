@@ -369,6 +369,10 @@ body {
 #panel-embed { display: none; }
 #panel-embed.visible { display: block; }
 
+/* ── Compressor panel ────────────────────────── */
+#panel-compress { display: none; }
+#panel-compress.visible { display: block; }
+
 /* Service tabs (pill style, inside the embed panel) */
 .svc-bar {
   display: flex;
