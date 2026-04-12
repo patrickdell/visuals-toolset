@@ -223,9 +223,13 @@ export function initCompressor() {
 
       // worker.js is same-origin so FFmpeg's default Worker spawn works fine.
       // No classWorkerURL needed.
+      // ffmpeg-core.js is self-hosted (same-origin, referenced by worker.js).
+      // ffmpeg-core.wasm is served from CDN — it's 30 MB and exceeds Cloudflare
+      // Pages' 25 MB file limit. The Worker can fetch it cross-origin because
+      // the CDN serves Access-Control-Allow-Origin: *.
       await ff.load({
         coreURL: LIB + 'ffmpeg-core.js',
-        wasmURL: LIB + 'ffmpeg-core.wasm',
+        wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
       });
       ffmpegInstance = ff;
       return ff;
