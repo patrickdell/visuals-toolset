@@ -1,0 +1,7 @@
+{
+  "name": "visuals-toolset",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "mkdir -p v2/lib/ffmpeg && curl -L https://github.com/eugeneware/ffmpeg-static-binaries/releases/download/b4.2.2/linux-x64 -o v2/lib/ffmpeg/ffmpeg && chmod +x v2/lib/ffmpeg/ffmpeg"
+  }
+}
