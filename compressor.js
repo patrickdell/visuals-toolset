@@ -217,7 +217,7 @@ export function initCompressor() {
       ff.on('progress', ({ progress }) => {
         const pct = Math.round(Math.min(Math.max(progress, 0), 1) * 100);
         const cur = currentPass === 1 ? Math.round(pct * 0.4) : 40 + Math.round(pct * 0.6);
-        const lbl = currentPass === 1 ? 'Pass 1 of 2 — analysing…' : 'Pass 2 of 2 — encoding…';
+        const lbl = currentPass === 1 ? 'Pass 1 of 2 — analyzing…' : 'Pass 2 of 2 — encoding…';
         setProgress(cur, lbl);
       });
 
@@ -279,15 +279,19 @@ export function initCompressor() {
       await ff.writeFile('input.mp4', await fetchFileUtil(sourceFile));
 
       // Pass 1 — turbo analysis
+      // Note: /dev/null doesn't exist in FFmpeg.wasm's virtual FS.
+      // Write to a real file and delete it after — pass 1 output is throwaway.
       currentPass = 1;
-      setProgress(0, 'Pass 1 of 2 — analysing…');
+      setProgress(0, 'Pass 1 of 2 — analyzing…');
       await ff.exec([
         '-y', '-i', 'input.mp4',
         '-c:v', 'libx264', '-b:v', videoBitrateKbps + 'k',
         '-preset', 'ultrafast',
         '-pass', '1', '-passlogfile', 'ffmpeg2pass',
-        '-an', '-f', 'null', '/dev/null',
+        '-an', '-f', 'null', 'pass1.mp4',
       ]);
+      // Clean up throwaway pass-1 output (ignore errors if it wasn't created)
+      try { await ff.deleteFile('pass1.mp4'); } catch (_) {}
 
       // Pass 2 — real encode
       currentPass = 2;
@@ -302,7 +306,8 @@ export function initCompressor() {
       ]);
 
       const data     = await ff.readFile('output.mp4');
-      const blob     = new Blob([data.buffer], { type: 'video/mp4' });
+      // readFile returns Uint8Array — use it directly (not .buffer which may be shared/offset)
+      const blob     = new Blob([data instanceof Uint8Array ? data : new Uint8Array(data)], { type: 'video/mp4' });
       const url      = URL.createObjectURL(blob);
       const a        = document.createElement('a');
       const baseName = sourceFile.name.replace(/\.[^.]+$/, '');
