@@ -2,4 +2,5 @@
 Thumbs.db
 *.log
 .env
-# lib/ffmpeg/ is downloaded at build time — NOT gitignored so Cloudflare Pages serves it
+# lib/ffmpeg/*.wasm excluded — too large for Cloudflare Pages (25 MB limit), fetched from CDN at runtime
+lib/ffmpeg/*.wasm
