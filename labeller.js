@@ -1,6 +1,7 @@
 /**
  * labeller.js — overlay a disclosure label on a photo, drag/resize, save.
  * Labels are drawn on canvas (no external PNG needed) to match the supplied design.
+ * Resize always locks the label's aspect ratio.
  */
 
 const LABELS = [
@@ -20,28 +21,30 @@ const LABELS = [
   { text: 'TRUE',          bg: '#4472C4' },
 ];
 
-const HANDLE_R  = 7;   // px radius of corner handle circles
-const MIN_W     = 60;
-const MIN_H     = 16;
+const HANDLE_R = 7;   // px radius of corner handle circles
+const MIN_W    = 60;
 
 export function initLabeller() {
-  const dropzone   = document.getElementById('lbl-dropzone');
-  const fileInput  = document.getElementById('lbl-file-input');
-  const chipsEl    = document.getElementById('lbl-chips');
-  const canvasWrap = document.getElementById('lbl-canvas-wrap');
-  const canvas     = document.getElementById('lbl-canvas');
-  const ctx        = canvas.getContext('2d');
-  const saveRow    = document.getElementById('lbl-save-row');
-  const saveJpgBtn = document.getElementById('lbl-save-jpg');
-  const savePngBtn = document.getElementById('lbl-save-png');
+  const dropzone     = document.getElementById('lbl-dropzone');
+  const fileInput    = document.getElementById('lbl-file-input');
+  const chipsEl      = document.getElementById('lbl-chips');
+  const canvasWrap   = document.getElementById('lbl-canvas-wrap');
+  const canvas       = document.getElementById('lbl-canvas');
+  const ctx          = canvas.getContext('2d');
+  const saveRow      = document.getElementById('lbl-save-row');
+  const utilRow      = document.getElementById('lbl-util-row');
+  const saveJpgBtn   = document.getElementById('lbl-save-jpg');
+  const savePngBtn   = document.getElementById('lbl-save-png');
+  const clearLblBtn  = document.getElementById('lbl-clear-label');
+  const resetBtn     = document.getElementById('lbl-reset');
 
   // ── State ──────────────────────────────────────────────────────────────────
   let photo       = null;   // ImageBitmap
   let photoW      = 0;
   let photoH      = 0;
   let fileName    = '';
-  let lbl         = null;   // { text, bg, x, y, w, h } in canvas-display coords
-  let drag        = null;   // { mode, handle?, startX, startY, origLbl }
+  let lbl         = null;   // { text, bg, x, y, w, h } — display-canvas coords
+  let drag        = null;   // { mode, handle?, startX, startY, origLbl, aspect }
   let selectedIdx = 0;
 
   // ── Build label chips ──────────────────────────────────────────────────────
@@ -94,6 +97,7 @@ export function initLabeller() {
     placeLabelDefault();
     canvasWrap.style.display = '';
     saveRow.style.display    = '';
+    utilRow.style.display    = '';
     dropzone.querySelector('.lbl-drop-text').textContent = file.name;
     dropzone.classList.add('has-file');
     draw();
@@ -105,6 +109,7 @@ export function initLabeller() {
     canvas.height = Math.round(maxW * photoH / photoW);
   }
 
+  // Default label: 40% of canvas width, 3.8:1 aspect (matches the supplied design)
   function placeLabelDefault() {
     const lw = canvas.width * 0.40;
     const lh = lw / 3.8;
@@ -112,13 +117,13 @@ export function initLabeller() {
       text: LABELS[selectedIdx].text,
       bg:   LABELS[selectedIdx].bg,
       x:    (canvas.width  - lw) / 2,
-      y:    canvas.height * 0.80 - lh / 2,
+      y:    canvas.height  * 0.80 - lh / 2,
       w:    lw,
       h:    lh,
     };
   }
 
-  // Re-size canvas if window resizes (keeps label in proportional position)
+  // Re-size canvas on window resize, keep label position proportional
   window.addEventListener('resize', () => {
     if (!photo) return;
     const oldW = canvas.width;
@@ -131,20 +136,38 @@ export function initLabeller() {
     draw();
   });
 
+  // ── Utility buttons ────────────────────────────────────────────────────────
+  clearLblBtn.addEventListener('click', () => {
+    lbl = null;
+    draw();
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (photo) { photo.close(); photo = null; }
+    photoW = 0; photoH = 0; fileName = '';
+    lbl = null; drag = null;
+    canvas.width = 0; canvas.height = 0;
+    canvasWrap.style.display = 'none';
+    saveRow.style.display    = 'none';
+    utilRow.style.display    = 'none';
+    dropzone.querySelector('.lbl-drop-text').textContent = 'Drop a photo here, or click to browse';
+    dropzone.classList.remove('has-file');
+    fileInput.value = '';
+    selectedIdx = 0;
+    syncChips();
+  });
+
   // ── Draw ───────────────────────────────────────────────────────────────────
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Photo
     if (photo) ctx.drawImage(photo, 0, 0, canvas.width, canvas.height);
-
     if (!lbl) return;
 
     // Label rectangle
     ctx.fillStyle = lbl.bg;
     ctx.fillRect(lbl.x, lbl.y, lbl.w, lbl.h);
 
-    // Label text — bold, centred, white, all-caps (text is already upper)
+    // Label text — bold, centred, white
     const fontSize = Math.max(8, Math.round(lbl.h * 0.52));
     ctx.font         = `900 ${fontSize}px 'Arial Black', Arial, sans-serif`;
     ctx.textAlign    = 'center';
@@ -180,11 +203,9 @@ export function initLabeller() {
   // ── Pointer interaction ────────────────────────────────────────────────────
   function canvasXY(e) {
     const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width  / rect.width;
-    const scaleY = canvas.height / rect.height;
     return {
-      cx: (e.clientX - rect.left) * scaleX,
-      cy: (e.clientY - rect.top)  * scaleY,
+      cx: (e.clientX - rect.left) * (canvas.width  / rect.width),
+      cy: (e.clientY - rect.top)  * (canvas.height / rect.height),
     };
   }
 
@@ -194,17 +215,24 @@ export function initLabeller() {
     if (!lbl) return;
     const { cx, cy } = canvasXY(e);
 
-    // 1. Check corner handles first (slightly enlarged hit area)
+    // 1. Corner handles first (enlarged hit area)
     const corners = getCorners();
     for (const [name, [hx, hy]] of Object.entries(corners)) {
       if (Math.hypot(cx - hx, cy - hy) <= HANDLE_R + 5) {
-        drag = { mode: 'resize', handle: name, startX: cx, startY: cy, origLbl: { ...lbl } };
+        drag = {
+          mode:    'resize',
+          handle:  name,
+          startX:  cx,
+          startY:  cy,
+          origLbl: { ...lbl },
+          aspect:  lbl.w / lbl.h,   // lock aspect ratio for entire drag
+        };
         canvas.setPointerCapture(e.pointerId);
         return;
       }
     }
 
-    // 2. Check label body
+    // 2. Label body — move
     if (cx >= lbl.x && cx <= lbl.x + lbl.w && cy >= lbl.y && cy <= lbl.y + lbl.h) {
       drag = { mode: 'move', startX: cx, startY: cy, origLbl: { ...lbl } };
       canvas.setPointerCapture(e.pointerId);
@@ -220,7 +248,7 @@ export function initLabeller() {
       lbl.x = clamp(o.x + (cx - drag.startX), 0, canvas.width  - lbl.w);
       lbl.y = clamp(o.y + (cy - drag.startY), 0, canvas.height - lbl.h);
     } else {
-      resizeFromHandle(drag.handle, cx, cy, o);
+      resizeFromHandle(drag.handle, cx, cy, o, drag.aspect);
     }
     draw();
   });
@@ -228,26 +256,38 @@ export function initLabeller() {
   canvas.addEventListener('pointerup',     () => { drag = null; });
   canvas.addEventListener('pointercancel', () => { drag = null; });
 
-  function resizeFromHandle(handle, cx, cy, o) {
-    let nx = o.x, ny = o.y, nw = o.w, nh = o.h;
+  /**
+   * Resize from a corner handle with locked aspect ratio.
+   * Strategy: drive by width (x-axis), derive height = width / aspect.
+   * Each handle keeps its diagonally opposite corner anchored.
+   */
+  function resizeFromHandle(handle, cx, cy, o, aspect) {
+    let nw, nh, nx, ny;
 
     if (handle === 'br') {
+      // Anchor: top-left (o.x, o.y)
       nw = Math.max(MIN_W, cx - o.x);
-      nh = Math.max(MIN_H, cy - o.y);
+      nh = nw / aspect;
       nx = o.x; ny = o.y;
+
     } else if (handle === 'tl') {
+      // Anchor: bottom-right (o.x + o.w, o.y + o.h)
       nw = Math.max(MIN_W, o.x + o.w - cx);
-      nh = Math.max(MIN_H, o.y + o.h - cy);
+      nh = nw / aspect;
       nx = o.x + o.w - nw;
       ny = o.y + o.h - nh;
+
     } else if (handle === 'tr') {
+      // Anchor: bottom-left (o.x, o.y + o.h)
       nw = Math.max(MIN_W, cx - o.x);
-      nh = Math.max(MIN_H, o.y + o.h - cy);
+      nh = nw / aspect;
       nx = o.x;
       ny = o.y + o.h - nh;
-    } else if (handle === 'bl') {
+
+    } else { // bl
+      // Anchor: top-right (o.x + o.w, o.y)
       nw = Math.max(MIN_W, o.x + o.w - cx);
-      nh = Math.max(MIN_H, cy - o.y);
+      nh = nw / aspect;
       nx = o.x + o.w - nw;
       ny = o.y;
     }
@@ -265,21 +305,16 @@ export function initLabeller() {
     const qual = mime === 'image/jpeg' ? 0.92  : undefined;
 
     // Render at the photo's native resolution
-    const off = document.createElement('canvas');
-    off.width  = photoW;
-    off.height = photoH;
+    const off   = document.createElement('canvas');
+    off.width   = photoW;
+    off.height  = photoH;
     const octx  = off.getContext('2d');
     const scale = photoW / canvas.width;
 
     octx.drawImage(photo, 0, 0, photoW, photoH);
 
     if (lbl) {
-      const sl = {
-        x: lbl.x * scale,
-        y: lbl.y * scale,
-        w: lbl.w * scale,
-        h: lbl.h * scale,
-      };
+      const sl = { x: lbl.x * scale, y: lbl.y * scale, w: lbl.w * scale, h: lbl.h * scale };
       octx.fillStyle = lbl.bg;
       octx.fillRect(sl.x, sl.y, sl.w, sl.h);
 
