@@ -57,6 +57,8 @@ export function initLabeller() {
     btn.addEventListener('click', () => {
       selectedIdx = i;
       syncChips();
+      // If a photo is loaded but the label was cleared, re-place it
+      if (photo && !lbl) placeLabelDefault();
       if (lbl) {
         lbl.text = LABELS[i].text;
         lbl.bg   = LABELS[i].bg;
