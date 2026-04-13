@@ -1002,6 +1002,36 @@ input[type="color"] {
 .pal-hsl  { font-size: 11px; opacity: .75; }
 .pal-copy-badge { font-size: 10px; opacity: .6; margin-top: auto; }
 
+/* ── Labeller ────────────────────────────────── */
+#panel-label { display: none; }
+#panel-label.visible { display: block; }
+
+.lbl-canvas-wrap {
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #000;
+  line-height: 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.lbl-canvas-wrap canvas {
+  width: 100%;
+  display: block;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* Label chips — base .chip extended with colour variants */
+.lbl-chip-row { flex-wrap: wrap; }
+
+.lbl-chip-red  { border-color: #CC0000; color: #CC0000; }
+.lbl-chip-red:hover { border-color: #CC0000; background: rgba(204,0,0,.12); color: #ff4444; }
+.lbl-chip-red.active  { background: #CC0000; border-color: #CC0000; color: #fff; }
+
+.lbl-chip-blue { border-color: #4472C4; color: #4472C4; }
+.lbl-chip-blue:hover { border-color: #4472C4; background: rgba(68,114,196,.12); color: #6b9fe8; }
+.lbl-chip-blue.active { background: #4472C4; border-color: #4472C4; color: #fff; }
+
 /* ── Image resizer quality slider ────────────── */
 #rsz-quality {
   -webkit-appearance: none;

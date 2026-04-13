@@ -42,6 +42,7 @@
       <button class="tab-btn" data-tab="extract">Extract Audio</button>
       <button class="tab-btn" data-tab="resize">Image Resize</button>
       <button class="tab-btn" data-tab="palette">Palette</button>
+      <button class="tab-btn" data-tab="label">Labeller</button>
     </nav>
     <span class="privacy-note">All processing happens in your browser</span>
   </header>
@@ -394,7 +395,7 @@
             <div class="trm-ctrl-row">
               <button id="trm-in-back-frame" class="trm-step-btn" title="Nudge In −1 frame (,)">← 1f</button>
               <button id="trm-in-back-sec"   class="trm-step-btn" title="Nudge In −1 second">← 1s</button>
-              <button id="trm-set-in"        class="trm-mark-btn trm-centre-btn" title="Mark In at playhead (I)">Mark In <kbd>I</kbd></button>
+              <button id="trm-set-in"        class="trm-mark-btn trm-centre-btn" title="Mark In at playhead (I)">Mark In</button>
               <button id="trm-in-fwd-sec"    class="trm-step-btn" title="Nudge In +1 second">1s →</button>
               <button id="trm-in-fwd-frame"  class="trm-step-btn" title="Nudge In +1 frame (.)">1f →</button>
             </div>
@@ -403,7 +404,7 @@
             <div class="trm-ctrl-row">
               <button id="trm-out-back-frame" class="trm-step-btn" title="Nudge Out −1 frame (&lt;)">← 1f</button>
               <button id="trm-out-back-sec"   class="trm-step-btn" title="Nudge Out −1 second">← 1s</button>
-              <button id="trm-set-out"        class="trm-mark-btn trm-centre-btn" title="Mark Out at playhead (O)">Mark Out <kbd>O</kbd></button>
+              <button id="trm-set-out"        class="trm-mark-btn trm-centre-btn" title="Mark Out at playhead (O)">Mark Out</button>
               <button id="trm-out-fwd-sec"    class="trm-step-btn" title="Nudge Out +1 second">1s →</button>
               <button id="trm-out-fwd-frame"  class="trm-step-btn" title="Nudge Out +1 frame (&gt;)">1f →</button>
             </div>
@@ -574,6 +575,45 @@
 
       </div>
       <div class="tab-permalink"><a class="tab-permalink-link" href="#palette" data-permalink="palette">🔗 Link to this tool</a></div>
+    </div>
+  </section>
+
+  <!-- ── Labeller panel ───────────────────────────────────────────── -->
+  <section id="panel-label">
+    <div class="wrap">
+      <div class="cmp-layout">
+
+        <!-- Drop zone -->
+        <div id="lbl-dropzone" class="dropzone card cmp-dropzone">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18M9 21V9"/>
+          </svg>
+          <div class="lbl-drop-text">Drop a photo here, or click to browse</div>
+          <div class="dropzone-hint">JPEG, PNG, WebP &mdash; drag the label to position, pull corners to resize</div>
+          <input id="lbl-file-input" type="file" accept="image/*" hidden />
+        </div>
+
+        <!-- Label chips -->
+        <div class="card sidebar-section">
+          <p class="chips-label">Choose label</p>
+          <div id="lbl-chips" class="chip-row lbl-chip-row"></div>
+        </div>
+
+        <!-- Canvas -->
+        <div id="lbl-canvas-wrap" class="lbl-canvas-wrap" style="display:none">
+          <canvas id="lbl-canvas"></canvas>
+        </div>
+
+        <!-- Save buttons -->
+        <div id="lbl-save-row" class="cmp-action-row" style="display:none">
+          <button id="lbl-save-jpg" class="export-btn">Save as JPEG</button>
+          <button id="lbl-save-png" class="export-btn-secondary">Save as PNG</button>
+        </div>
+
+      </div>
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#label" data-permalink="label">🔗 Link to this tool</a></div>
     </div>
   </section>
 

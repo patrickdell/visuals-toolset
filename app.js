@@ -11,6 +11,7 @@ import { initTrimmer }             from './trimmer.js';
 import { initExtractor }           from './extractor.js';
 import { initResizer }             from './resizer.js';
 import { initPalette }             from './palette.js';
+import { initLabeller }           from './labeller.js';
 
 // ── Build preset chips ────────────────────────────────────────────────────
 
@@ -46,6 +47,7 @@ const panels  = {
   extract:  'panel-extract',
   resize:   'panel-resize',
   palette:  'panel-palette',
+  label:    'panel-label',
 };
 
 function activateTab(tab) {
@@ -79,6 +81,7 @@ const calcChips = document.getElementById('calcChips');
 const cropChips = document.getElementById('cropChips');
 
 initEmbed();
+initLabeller();
 initCompressor();
 initTrimmer();
 initExtractor();
