@@ -14,13 +14,11 @@
 
     /* Sidebar crop info box */
     .info-box {
-      background: #0c0f14;
+      background: var(--code-bg);
       border: 1px solid var(--line);
       border-radius: 8px;
       padding: 10px 12px;
     }
-
-    .info-box { background: var(--code-bg); }
 
     .privacy-note {
       font-size: 11px;
@@ -40,6 +38,9 @@
       <button class="tab-btn" data-tab="calc">Aspect Ratio</button>
       <button class="tab-btn" data-tab="crop">Crop &amp; Export</button>
       <button class="tab-btn" data-tab="compress">Compressor</button>
+      <button class="tab-btn" data-tab="trim">Trimmer</button>
+      <button class="tab-btn" data-tab="resize">Image Resize</button>
+      <button class="tab-btn" data-tab="palette">Palette</button>
     </nav>
     <span class="privacy-note">All processing happens in your browser</span>
   </header>
@@ -49,6 +50,7 @@
     <div class="wrap">
       <div class="svc-bar" id="embedTabBar"></div>
       <div id="embedPanels"></div>
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#embed" data-permalink="embed">🔗 Link to this tool</a></div>
     </div>
   </section>
 
@@ -92,43 +94,36 @@
         <h3>Shape reference</h3>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 730 240" role="img" aria-label="Mobile aspect ratio shapes reference" style="width:100%;max-width:730px;height:auto;display:block;">
           <style>text{font-family:system-ui,-apple-system,Helvetica,Arial,sans-serif}.label-ratio{font-size:13px;font-weight:700;fill:#e8eefc;text-anchor:middle}.label-desc{font-size:10px;fill:#9fb0d1;text-anchor:middle}</style>
-          <!-- 16:9 — crop h=44, y=69 (wide landscape bar) -->
           <g transform="translate(10,10)">
             <rect width="90" height="170" rx="12" fill="#252a36"/><rect x="6" y="22" width="78" height="138" fill="#0f1115"/><rect x="33" y="13" width="24" height="6" rx="3" fill="#0f1115"/>
             <rect x="6" y="69" width="78" height="44" fill="#da161f" fill-opacity=".18" stroke="#DA161F" stroke-width="1.5"/>
             <text class="label-ratio" x="45" y="192">16:9</text><text class="label-desc" x="45" y="206">Widescreen video,</text><text class="label-desc" x="45" y="218">YouTube / TV</text>
           </g>
-          <!-- 3:2 — crop h=52, y=63 -->
           <g transform="translate(110,10)">
             <rect width="90" height="170" rx="12" fill="#252a36"/><rect x="6" y="22" width="78" height="138" fill="#0f1115"/><rect x="33" y="13" width="24" height="6" rx="3" fill="#0f1115"/>
             <rect x="6" y="63" width="78" height="52" fill="#da161f" fill-opacity=".18" stroke="#DA161F" stroke-width="1.5"/>
             <text class="label-ratio" x="45" y="192">3:2</text><text class="label-desc" x="45" y="206">Standard landscape,</text><text class="label-desc" x="45" y="218">classic photo</text>
           </g>
-          <!-- 4:3 — crop h=58, y=60 -->
           <g transform="translate(210,10)">
             <rect width="90" height="170" rx="12" fill="#252a36"/><rect x="6" y="22" width="78" height="138" fill="#0f1115"/><rect x="33" y="13" width="24" height="6" rx="3" fill="#0f1115"/>
             <rect x="6" y="60" width="78" height="58" fill="#da161f" fill-opacity=".18" stroke="#DA161F" stroke-width="1.5"/>
             <text class="label-ratio" x="45" y="192">4:3</text><text class="label-desc" x="45" y="206">Slightly taller</text><text class="label-desc" x="45" y="218">than 3:2</text>
           </g>
-          <!-- 1:1 — crop h=78, y=53 -->
           <g transform="translate(310,10)">
             <rect width="90" height="170" rx="12" fill="#252a36"/><rect x="6" y="22" width="78" height="138" fill="#0f1115"/><rect x="33" y="13" width="24" height="6" rx="3" fill="#0f1115"/>
             <rect x="6" y="53" width="78" height="78" fill="#da161f" fill-opacity=".18" stroke="#DA161F" stroke-width="1.5"/>
             <text class="label-ratio" x="45" y="192">1:1</text><text class="label-desc" x="45" y="206">Square</text>
           </g>
-          <!-- 4:5 — crop h=98, y=43 -->
           <g transform="translate(410,10)">
             <rect width="90" height="170" rx="12" fill="#252a36"/><rect x="6" y="22" width="78" height="138" fill="#0f1115"/><rect x="33" y="13" width="24" height="6" rx="3" fill="#0f1115"/>
             <rect x="6" y="43" width="78" height="98" fill="#da161f" fill-opacity=".18" stroke="#DA161F" stroke-width="1.5"/>
             <text class="label-ratio" x="45" y="192">4:5</text><text class="label-desc" x="45" y="206">Vertical rectangle,</text><text class="label-desc" x="45" y="218">popular Instagram shape</text>
           </g>
-          <!-- 2:3 — crop h=117, y=34 -->
           <g transform="translate(510,10)">
             <rect width="90" height="170" rx="12" fill="#252a36"/><rect x="6" y="22" width="78" height="138" fill="#0f1115"/><rect x="33" y="13" width="24" height="6" rx="3" fill="#0f1115"/>
             <rect x="6" y="34" width="78" height="117" fill="#da161f" fill-opacity=".18" stroke="#DA161F" stroke-width="1.5"/>
             <text class="label-ratio" x="45" y="192">2:3</text><text class="label-desc" x="45" y="206">Vertical, tallest</text><text class="label-desc" x="45" y="218">classic photo shape</text>
           </g>
-          <!-- 9:16 — crop h=138, y=22 (full screen height) -->
           <g transform="translate(610,10)">
             <rect width="90" height="170" rx="12" fill="#252a36"/><rect x="6" y="22" width="78" height="138" fill="#0f1115"/><rect x="33" y="13" width="24" height="6" rx="3" fill="#0f1115"/>
             <rect x="6" y="22" width="78" height="138" fill="#da161f" fill-opacity=".18" stroke="#DA161F" stroke-width="1.5"/>
@@ -137,6 +132,7 @@
         </svg>
       </div>
 
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#calc" data-permalink="calc">🔗 Link to this tool</a></div>
     </div><!-- /wrap -->
   </section>
 
@@ -147,7 +143,6 @@
 
         <!-- Left: canvas / dropzone -->
         <div>
-          <!-- Drop zone (shown when no image loaded) -->
           <div id="dropzone" class="dropzone card">
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -160,13 +155,18 @@
             <input id="fileInput" type="file" accept="image/*" hidden />
           </div>
 
-          <!-- Canvas (shown after image loaded) -->
           <div class="canvas-wrap card" style="padding:0;">
             <canvas id="cropCanvas" height="500"></canvas>
           </div>
 
           <div id="sizeWarn" class="size-warn">
             Source image is smaller than 1080 px on the short side &mdash; exported file may look soft at large sizes.
+          </div>
+
+          <!-- Crop preview area -->
+          <div id="crop-preview-wrap" class="crop-preview-wrap" style="display:none">
+            <p class="chips-label" style="margin-bottom:8px">Crop preview</p>
+            <img id="crop-preview-img" class="crop-preview-img" alt="Crop preview" />
           </div>
         </div>
 
@@ -219,12 +219,18 @@
           </div>
 
           <div class="sidebar-section">
+            <button id="previewCropBtn" class="export-btn-secondary" disabled>Preview crop <kbd>↵</kbd></button>
+            <button id="resetCropBtn" class="export-btn-secondary" disabled style="margin-top:6px">Reset crop</button>
+          </div>
+
+          <div class="sidebar-section">
             <button id="exportPng" class="export-btn" disabled>Export PNG</button>
             <button id="exportJpg" class="export-btn-secondary" disabled>Export JPEG (92%)</button>
           </div>
 
         </aside>
       </div>
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#crop" data-permalink="crop">🔗 Link to this tool</a></div>
     </div>
   </section>
 
@@ -248,7 +254,7 @@
         <!-- Queue -->
         <div id="cmp-queue" class="cmp-queue" style="display:none"></div>
 
-        <!-- Settings -->
+        <!-- Mode -->
         <div class="card sidebar-section">
           <p class="chips-label">Mode</p>
           <div class="cmp-mode-row">
@@ -278,6 +284,16 @@
           </div>
         </div>
 
+        <!-- Scale (optional) -->
+        <div class="card sidebar-section">
+          <p class="chips-label">Resize <span class="cmp-optional">(optional &mdash; scales longest side, never upscales)</span></p>
+          <div id="cmp-scale-chips" class="chip-row cmp-chip-row"></div>
+          <div id="cmp-custom-scale-wrap" class="custom-ratio-row" style="display:none">
+            <input id="cmp-custom-scale" type="number" min="100" max="7680" placeholder="px" style="width:70px">
+            <span>px longest side</span>
+          </div>
+        </div>
+
         <!-- Speed -->
         <div class="card sidebar-section">
           <p class="chips-label">Speed vs quality</p>
@@ -298,7 +314,7 @@
         </div>
         <div id="cmp-folder-label" class="cmp-folder-label" style="display:none"></div>
 
-        <!-- Progress (current file) -->
+        <!-- Progress -->
         <div id="cmp-progress-wrap" class="cmp-progress-wrap" style="display:none">
           <div class="cmp-progress-track">
             <div id="cmp-progress-bar" class="cmp-progress-bar" style="width:0%"></div>
@@ -311,6 +327,162 @@
         </div>
 
       </div><!-- /cmp-layout -->
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#compress" data-permalink="compress">🔗 Link to this tool</a></div>
+    </div>
+  </section>
+
+  <!-- ── Trimmer panel ─────────────────────────────────────────────── -->
+  <section id="panel-trim">
+    <div class="wrap">
+      <div class="cmp-layout">
+
+        <!-- Drop zone -->
+        <div id="trm-dropzone" class="dropzone card cmp-dropzone">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <path d="M15 10l-4 4-4-4"/><path d="M11 14V3"/><rect x="2" y="14" width="20" height="8" rx="2"/>
+          </svg>
+          <div class="trm-drop-text">Drop a video here, or click to browse</div>
+          <div class="dropzone-hint">H.264, H.265, VP8/VP9 in MP4, MOV, MKV, WebM &mdash; stream copy, near-instant</div>
+          <input id="trm-file-input" type="file" accept="video/*" hidden />
+        </div>
+
+        <!-- Format warning -->
+        <div id="trm-format-warn" class="trm-warn" style="display:none">
+          ⚠ This format (ProRes, DNxHD, MXF) is not supported in-browser. Convert to H.264 first in DaVinci Resolve or Handbrake.
+        </div>
+
+        <!-- Size warning -->
+        <div id="trm-size-warn" class="trm-warn" style="display:none"></div>
+
+        <!-- Player + timeline -->
+        <div id="trm-player-wrap" style="display:none">
+          <video id="trm-video" class="trm-video" controls preload="metadata"></video>
+
+          <!-- Timeline -->
+          <div class="trm-timeline">
+            <div class="trm-track-bg">
+              <div id="trm-track-fill" class="trm-track-fill"></div>
+              <input id="trm-range-in"  class="trm-range trm-range-in"  type="range" min="0" max="100" step="0.1" value="0" />
+              <input id="trm-range-out" class="trm-range trm-range-out" type="range" min="0" max="100" step="0.1" value="100" />
+            </div>
+            <div class="trm-timecodes">
+              <span id="trm-in-label">In: 0:00.0</span>
+              <span id="trm-clip-label">Clip: —</span>
+              <span id="trm-out-label">Out: —</span>
+            </div>
+          </div>
+
+          <!-- Set in/out buttons -->
+          <div class="trm-btn-row">
+            <button id="trm-set-in"  class="text-btn">Set In at playhead</button>
+            <button id="trm-set-out" class="text-btn">Set Out at playhead</button>
+          </div>
+        </div>
+
+        <!-- Trim action -->
+        <div class="cmp-action-row">
+          <button id="trm-trim-btn" class="export-btn" disabled>Trim &amp; Save</button>
+        </div>
+
+        <!-- Progress -->
+        <div id="trm-progress-wrap" class="cmp-progress-wrap" style="display:none">
+          <div class="cmp-progress-track">
+            <div id="trm-progress-bar" class="cmp-progress-bar" style="width:0%"></div>
+          </div>
+          <div class="cmp-progress-meta">
+            <span id="trm-progress-label">Preparing…</span>
+          </div>
+        </div>
+
+      </div>
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#trim" data-permalink="trim">🔗 Link to this tool</a></div>
+    </div>
+  </section>
+
+  <!-- ── Image Resizer panel ───────────────────────────────────────── -->
+  <section id="panel-resize">
+    <div class="wrap">
+      <div class="cmp-layout">
+
+        <!-- Drop zone -->
+        <div id="rsz-dropzone" class="dropzone card cmp-dropzone">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+          </svg>
+          <div class="rsz-drop-text">Drop images here, or click to browse</div>
+          <div class="dropzone-hint">JPEG, PNG, WebP, GIF &mdash; multiple files supported</div>
+          <input id="rsz-file-input" type="file" accept="image/*" multiple hidden />
+        </div>
+
+        <!-- Queue -->
+        <div id="rsz-queue" class="cmp-queue" style="display:none"></div>
+
+        <!-- Scale -->
+        <div class="card sidebar-section">
+          <p class="chips-label">Scale to <span class="cmp-optional">(longest side, never upscales)</span></p>
+          <div id="rsz-scale-chips" class="chip-row cmp-chip-row"></div>
+          <div id="rsz-custom-wrap" class="custom-ratio-row" style="display:none">
+            <input id="rsz-custom-px" type="number" min="10" max="20000" placeholder="px" style="width:70px">
+            <span>px longest side</span>
+          </div>
+        </div>
+
+        <!-- Format -->
+        <div class="card sidebar-section">
+          <p class="chips-label">Output format</p>
+          <div id="rsz-format-chips" class="chip-row"></div>
+        </div>
+
+        <!-- Quality -->
+        <div id="rsz-quality-wrap" class="card sidebar-section">
+          <p class="chips-label">Quality &mdash; <span id="rsz-quality-label">85%</span></p>
+          <input id="rsz-quality" type="range" min="60" max="100" value="85" style="width:100%">
+        </div>
+
+        <!-- Output folder + resize -->
+        <div class="cmp-action-row">
+          <button id="rsz-pick-folder" class="export-btn-secondary">Choose output folder&hellip;</button>
+          <button id="rsz-resize-btn" class="export-btn" disabled>Resize All</button>
+        </div>
+        <div id="rsz-folder-label" class="cmp-folder-label" style="display:none"></div>
+
+      </div>
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#resize" data-permalink="resize">🔗 Link to this tool</a></div>
+    </div>
+  </section>
+
+  <!-- ── Palette Extractor panel ──────────────────────────────────── -->
+  <section id="panel-palette">
+    <div class="wrap">
+      <div class="cmp-layout">
+
+        <!-- Drop zone -->
+        <div id="pal-dropzone" class="dropzone card cmp-dropzone">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3"/>
+            <path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"/>
+          </svg>
+          <div class="pal-drop-text">Drop an image here, or click to browse</div>
+          <div class="dropzone-hint">JPEG, PNG, WebP, GIF &mdash; extracts dominant colours</div>
+          <input id="pal-file-input" type="file" accept="image/*" hidden />
+        </div>
+
+        <!-- Image preview -->
+        <div id="pal-preview" class="pal-preview" style="display:none"></div>
+
+        <!-- Swatches -->
+        <div id="pal-swatches" class="pal-swatches" style="display:none"></div>
+
+        <!-- Copy all -->
+        <div style="display:none" id="pal-copy-all-wrap">
+          <button id="pal-copy-all" class="export-btn-secondary">Copy all as CSS variables</button>
+        </div>
+
+      </div>
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#palette" data-permalink="palette">🔗 Link to this tool</a></div>
     </div>
   </section>
 

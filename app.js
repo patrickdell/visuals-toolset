@@ -7,6 +7,9 @@ import { initCropper }             from './cropper.js';
 import { initExporter }            from './exporter.js';
 import { initEmbed }               from './embed.js';
 import { initCompressor }          from './compressor.js';
+import { initTrimmer }             from './trimmer.js';
+import { initResizer }             from './resizer.js';
+import { initPalette }             from './palette.js';
 
 // ── Build preset chips ────────────────────────────────────────────────────
 
@@ -33,17 +36,39 @@ function syncChips(container, preset) {
 // ── Tab switching ─────────────────────────────────────────────────────────
 
 const tabBtns = document.querySelectorAll('.tab-btn');
-const panels  = { embed: 'panel-embed', calc: 'panel-calc', crop: 'panel-crop', compress: 'panel-compress' };
+const panels  = {
+  embed:    'panel-embed',
+  calc:     'panel-calc',
+  crop:     'panel-crop',
+  compress: 'panel-compress',
+  trim:     'panel-trim',
+  resize:   'panel-resize',
+  palette:  'panel-palette',
+};
+
+function activateTab(tab) {
+  if (!panels[tab]) tab = 'embed';
+  tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  Object.values(panels).forEach(id => document.getElementById(id)?.classList.remove('visible'));
+  document.getElementById(panels[tab])?.classList.add('visible');
+  history.replaceState(null, '', '#' + tab);
+  localStorage.setItem('ar_tab', tab);
+}
 
 tabBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    tabBtns.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const tab = btn.dataset.tab;
-    Object.values(panels).forEach(id => document.getElementById(id).classList.remove('visible'));
-    document.getElementById(panels[tab]).classList.add('visible');
-    localStorage.setItem('ar_tab', tab);
-  });
+  btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+});
+
+// Permalink links — copy full URL to clipboard on click
+document.addEventListener('click', e => {
+  const link = e.target.closest('[data-permalink]');
+  if (!link) return;
+  e.preventDefault();
+  const url = location.origin + location.pathname + '#' + link.dataset.permalink;
+  navigator.clipboard?.writeText(url).catch(() => {});
+  const orig = link.textContent;
+  link.textContent = '✓ Copied link!';
+  setTimeout(() => { link.textContent = orig; }, 2000);
 });
 
 // ── Init modules ──────────────────────────────────────────────────────────
@@ -53,6 +78,9 @@ const cropChips = document.getElementById('cropChips');
 
 initEmbed();
 initCompressor();
+initTrimmer();
+initResizer();
+initPalette();
 const calculator = initCalculator({ onRatioChange: () => {} });
 const cropper    = initCropper({ onCropChange: () => exporter.setEnabled(cropper.isLoaded()) });
 const exporter   = initExporter({ getCropState: () => cropper.getCropState() });
@@ -107,6 +135,55 @@ customChip.addEventListener('click', () => {
 customRatioW.addEventListener('input', applyCustomRatio);
 customRatioH.addEventListener('input', applyCustomRatio);
 
+// ── Crop preview button + Enter key + Reset ───────────────────────────────
+
+const previewCropBtn = document.getElementById('previewCropBtn');
+const resetCropBtn   = document.getElementById('resetCropBtn');
+const cropPreviewWrap = document.getElementById('crop-preview-wrap');
+const cropPreviewImg  = document.getElementById('crop-preview-img');
+
+function showCropPreview() {
+  if (!cropper.isLoaded()) return;
+  const { bitmap, crop } = cropper.getCropState();
+  if (!bitmap || !crop) return;
+  const MAX = 600;
+  const scale = Math.min(1, MAX / Math.max(crop.w, crop.h));
+  const previewCanvas = document.createElement('canvas');
+  previewCanvas.width  = Math.round(crop.w * scale);
+  previewCanvas.height = Math.round(crop.h * scale);
+  previewCanvas.getContext('2d').drawImage(
+    bitmap,
+    crop.x, crop.y, crop.w, crop.h,
+    0, 0, previewCanvas.width, previewCanvas.height
+  );
+  cropPreviewImg.src = previewCanvas.toDataURL();
+  cropPreviewWrap.style.display = '';
+}
+
+previewCropBtn?.addEventListener('click', showCropPreview);
+
+resetCropBtn?.addEventListener('click', () => {
+  cropper.resetCrop?.();
+  cropPreviewWrap.style.display = 'none';
+  cropPreviewImg.src = '';
+});
+
+// Enter key on crop panel
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('panel-crop').classList.contains('visible')) {
+    // Don't intercept if focus is in an input
+    if (['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) return;
+    showCropPreview();
+  }
+});
+
+// Enable preview/reset buttons when image loads
+document.addEventListener('cropLoaded', () => {
+  previewCropBtn.disabled = false;
+  resetCropBtn.disabled   = false;
+  exporter.setEnabled(true);
+});
+
 // ── Restore persisted state ───────────────────────────────────────────────
 
 const savedPreset = localStorage.getItem('ar_preset');
@@ -117,6 +194,7 @@ if (savedPreset) {
   selectRatio(activePreset);
 }
 
-const savedTab = localStorage.getItem('ar_tab') || 'embed';
-const savedTabBtn = document.querySelector(`.tab-btn[data-tab="${savedTab}"]`);
-(savedTabBtn || document.querySelector('.tab-btn[data-tab="embed"]')).click();
+// Hash → localStorage → embed
+const hash = location.hash.replace('#', '');
+const savedTab = hash && panels[hash] ? hash : (localStorage.getItem('ar_tab') || 'embed');
+activateTab(savedTab);

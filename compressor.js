@@ -1,14 +1,22 @@
 /**
  * compressor.js — browser-side H.264 video compression via FFmpeg.wasm
- * Single-pass CBR encoding, batch queue, File System Access API save.
+ * VBR encoding, batch queue, File System Access API save.
  */
 
-const LIB = new URL('./lib/ffmpeg/', import.meta.url).href;
+import { getFFmpeg, resetFFmpeg } from './ffmpeg-shared.js';
 
 const BITRATE_PRESETS    = [1500, 2000, 2250, 2500, 3000, 5000];
 const SIZE_PRESETS       = [3, 5, 10, 15, 20, 30]; // MB
 const SPEED_MAP          = { fast: 'ultrafast', better: 'veryfast' };
 const ASSUMED_AUDIO_KBPS = 128;
+const SCALE_PRESETS      = [
+  { label: 'Keep original', value: null  },
+  { label: '4K (3840px)',   value: 3840  },
+  { label: '1920px',        value: 1920  },
+  { label: '1280px',        value: 1280  },
+  { label: '720px',         value: 720   },
+  { label: '480px',         value: 480   },
+];
 
 export function initCompressor() {
   // ── DOM refs ────────────────────────────────────────────────────────────
@@ -26,6 +34,9 @@ export function initCompressor() {
   const customSizeInput    = document.getElementById('cmp-custom-size');
   const estSizeEl          = document.getElementById('cmp-est-size');
   const speedChips         = document.getElementById('cmp-speed-chips');
+  const scaleChips         = document.getElementById('cmp-scale-chips');
+  const customScaleWrap    = document.getElementById('cmp-custom-scale-wrap');
+  const customScaleInput   = document.getElementById('cmp-custom-scale');
   const compressBtn        = document.getElementById('cmp-compress-btn');
   const pickFolderBtn      = document.getElementById('cmp-pick-folder');
   const folderLabel        = document.getElementById('cmp-folder-label');
@@ -39,10 +50,10 @@ export function initCompressor() {
   let selectedBitrate = BITRATE_PRESETS[1];
   let selectedSizeMB  = SIZE_PRESETS[2];
   let selectedSpeed   = 'fast';
+  let selectedScale   = null;    // null = keep original
   let outputDirHandle = null;
   let ffmpegInstance  = null;
   let fetchFileUtil   = null;
-  let loadPromise     = null;
   let encoding        = false;
   let cancelRequested = false;
   let startTime       = 0;
@@ -103,6 +114,36 @@ export function initCompressor() {
   customSizeInput.addEventListener('input', () => {
     const v = Number(customSizeInput.value);
     if (v > 0) selectedSizeMB = v;
+  });
+
+  // ── Scale chips ──────────────────────────────────────────────────────────
+  SCALE_PRESETS.forEach(({ label, value }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip' + (value === selectedScale ? ' active' : '');
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      customScaleWrap.style.display = 'none';
+      setActiveChip(scaleChips, btn);
+      selectedScale = value;
+    });
+    scaleChips.appendChild(btn);
+  });
+  // "Keep original" is index 0 — ensure it starts active
+  scaleChips.firstElementChild.classList.add('active');
+  const customScaleChip = document.createElement('button');
+  customScaleChip.type = 'button';
+  customScaleChip.className = 'chip';
+  customScaleChip.textContent = 'Custom…';
+  customScaleChip.addEventListener('click', () => {
+    setActiveChip(scaleChips, customScaleChip);
+    customScaleWrap.style.display = 'flex';
+    customScaleInput.focus();
+  });
+  scaleChips.appendChild(customScaleChip);
+  customScaleInput.addEventListener('input', () => {
+    const v = Number(customScaleInput.value);
+    if (v >= 100) selectedScale = v;
   });
 
   // ── Speed chips ──────────────────────────────────────────────────────────
@@ -222,36 +263,25 @@ export function initCompressor() {
     estSizeEl.textContent = 'Estimated total output: ~' + mb + ' MB';
   }
 
-  // ── Lazy-load FFmpeg ──────────────────────────────────────────────────────
-  function startLoad() {
-    if (loadPromise) return loadPromise;
-    loadPromise = (async () => {
-      const [{ FFmpeg }, { fetchFile }] = await Promise.all([
-        import(LIB + 'index.js'),
-        import(LIB + 'util.js'),
-      ]);
-      fetchFileUtil = fetchFile;
-      const ff = new FFmpeg();
-      ff.on('progress', ({ progress }) => {
-        const pct = Math.min(Math.max(progress, 0), 1);
-        const elapsed = (Date.now() - startTime) / 1000;
-        const etaStr = pct > 0.02 && elapsed > 2
-          ? ' — ' + formatDuration(Math.round(elapsed / pct * (1 - pct))) + ' remaining'
-          : '';
-        setProgress(10 + Math.round(pct * 88), 'Encoding… ' + Math.round(pct * 100) + '%' + etaStr);
-      });
-      await ff.load({
-        coreURL: LIB + 'ffmpeg-core.js',
-        wasmURL: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/esm/ffmpeg-core.wasm',
-      });
-      ffmpegInstance = ff;
-      return ff;
-    })();
-    return loadPromise;
+  // ── Lazy-load FFmpeg (shared singleton) ──────────────────────────────────
+  function onProgress({ progress }) {
+    const pct     = Math.min(Math.max(progress, 0), 1);
+    const elapsed = (Date.now() - startTime) / 1000;
+    const etaStr  = pct > 0.02 && elapsed > 2
+      ? ' — ' + formatDuration(Math.round(elapsed / pct * (1 - pct))) + ' remaining'
+      : '';
+    setProgress(10 + Math.round(pct * 88), 'Encoding… ' + Math.round(pct * 100) + '%' + etaStr);
+  }
+
+  async function startLoad() {
+    const { ff, fetchFile } = await getFFmpeg(onProgress);
+    ffmpegInstance = ff;
+    fetchFileUtil  = fetchFile;
+    return ff;
   }
 
   document.querySelector('.tab-btn[data-tab="compress"]')?.addEventListener('click', () => {
-    if (!loadPromise) startLoad().catch(() => { loadPromise = null; });
+    getFFmpeg(onProgress).catch(() => resetFFmpeg());
   }, { once: true });
 
   // ── Compress all ──────────────────────────────────────────────────────────
@@ -287,14 +317,23 @@ export function initCompressor() {
           await ff.writeFile('input.mp4', await fetchFileUtil(item.file));
 
           setProgress(10, 'Encoding…');
-          const ret = await ff.exec([
+          const execArgs = [
             '-y', '-i', 'input.mp4',
             '-c:v', 'libx264',
             '-b:v', videoBitrateKbps + 'k',
+            '-maxrate', (videoBitrateKbps * 2) + 'k',
+            '-bufsize', (videoBitrateKbps * 4) + 'k',
             '-preset', preset,
             '-c:a', 'copy',
-            'output.mp4',
-          ]);
+          ];
+          if (selectedScale) {
+            // Scale longest side to N px, never upscale, keep aspect ratio (even dimensions)
+            execArgs.push('-vf',
+              `scale='if(gt(iw,ih),min(iw,${selectedScale}),-2)':'if(gt(ih,iw),min(ih,${selectedScale}),-2)'`
+            );
+          }
+          execArgs.push('output.mp4');
+          const ret = await ff.exec(execArgs);
           if (ret !== 0) throw new Error('FFmpeg exited with code ' + ret);
 
           const data = await ff.readFile('output.mp4');
@@ -330,7 +369,7 @@ export function initCompressor() {
 
     } catch (err) {
       setProgress(0, 'Error: ' + (err.message || err));
-      loadPromise = null;
+      resetFFmpeg();
       setTimeout(() => { progressWrap.style.display = 'none'; }, 3000);
     } finally {
       encoding = false;
@@ -351,8 +390,8 @@ export function initCompressor() {
     if (ffmpegInstance && encoding) {
       ffmpegInstance.terminate();
       ffmpegInstance = null;
-      loadPromise    = null;
       fetchFileUtil  = null;
+      resetFFmpeg();
     }
     clearInterval(timerInterval);
     progressWrap.style.display = 'none';

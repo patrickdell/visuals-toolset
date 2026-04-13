@@ -65,6 +65,7 @@ export function initCropper({ onCropChange }) {
 
       sizeWarn.classList.toggle('visible',
         bitmap.width < 1080 || bitmap.height < 1080);
+      document.dispatchEvent(new CustomEvent('cropLoaded'));
     } catch (e) {
       console.error('Failed to load image', e);
     }
@@ -479,5 +480,15 @@ export function initCropper({ onCropChange }) {
 
   function isLoaded() { return state.loaded; }
 
-  return { setRatio, getCropState, isLoaded };
+  function resetCrop() {
+    if (!state.loaded) return;
+    pushHistory(state.crop);
+    fitCrop();
+    render();
+    onCropChange?.();
+    // Signal to app.js
+    document.dispatchEvent(new CustomEvent('cropLoaded'));
+  }
+
+  return { setRatio, getCropState, isLoaded, resetCrop };
 }

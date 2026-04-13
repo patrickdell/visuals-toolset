@@ -729,6 +729,224 @@ input[type="color"] {
   margin-top: 8px;
 }
 
+.cmp-optional {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ── New panel visibility ────────────────────── */
+#panel-trim    { display: none; }
+#panel-trim.visible    { display: block; }
+#panel-resize  { display: none; }
+#panel-resize.visible  { display: block; }
+#panel-palette { display: none; }
+#panel-palette.visible { display: block; }
+
+/* ── Tab permalink footer ────────────────────── */
+.tab-permalink { margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--line); text-align: right; }
+.tab-permalink-link {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color .15s;
+}
+.tab-permalink-link:hover { color: var(--accent); }
+
+/* ── Crop preview ────────────────────────────── */
+.crop-preview-wrap {
+  margin-top: 16px;
+}
+.crop-preview-img {
+  width: 100%;
+  max-width: 600px;
+  height: auto;
+  display: block;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+
+/* ── Trimmer ─────────────────────────────────── */
+.trm-video {
+  width: 100%;
+  max-height: 50vh;
+  background: #000;
+  border-radius: var(--radius);
+  display: block;
+}
+
+.trm-warn {
+  font-size: 13px;
+  color: #f5a623;
+  background: rgba(245,166,35,.08);
+  border: 1px solid rgba(245,166,35,.3);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.trm-timeline {
+  margin-top: 16px;
+}
+
+.trm-track-bg {
+  position: relative;
+  height: 32px;
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.trm-track-fill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--accent);
+  opacity: .25;
+  pointer-events: none;
+}
+
+/* Dual-thumb range: stack two <input type=range> on top of each other */
+.trm-range {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  pointer-events: none;
+  margin: 0;
+}
+
+.trm-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 3px;
+  cursor: ew-resize;
+  pointer-events: all;
+}
+
+.trm-range::-moz-range-thumb {
+  width: 18px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 3px;
+  cursor: ew-resize;
+  pointer-events: all;
+  border: none;
+}
+
+.trm-range::-webkit-slider-runnable-track { background: transparent; }
+.trm-range::-moz-range-track { background: transparent; }
+
+.trm-timecodes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
+.trm-btn-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Palette extractor ───────────────────────── */
+.pal-preview {
+  width: 100%;
+  max-width: 400px;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+
+.pal-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.pal-swatch {
+  border-radius: var(--radius);
+  padding: 16px 12px 10px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 100px;
+  border: 1px solid rgba(255,255,255,.08);
+  transition: transform .1s, box-shadow .1s;
+}
+
+.pal-swatch:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+
+.pal-hex  { font-size: 14px; font-weight: 700; font-family: monospace; }
+.pal-rgb  { font-size: 11px; opacity: .75; }
+.pal-hsl  { font-size: 11px; opacity: .75; }
+.pal-copy-badge { font-size: 10px; opacity: .6; margin-top: auto; }
+
+/* ── Image resizer quality slider ────────────── */
+#rsz-quality {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--line);
+  border-radius: 3px;
+  outline: none;
+  margin-top: 8px;
+}
+#rsz-quality::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}
+#rsz-quality::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  border: none;
+}
+
+/* ── Mobile base fixes ───────────────────────── */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* Prevent iOS auto-zoom on input focus (font-size must be ≥16px) */
+input, select, textarea { font-size: 16px; }
+
+/* Scrollable tab bar — no wrap, no overflow clip */
+.tabs {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-shrink: 0;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+/* Minimum tap target size */
+.tab-btn, .chip, .text-btn, .export-btn, .export-btn-secondary,
+.icon-btn, .e-btn, .svc-btn { min-height: 44px; }
+
+/* Dropzone height — clamp for mobile */
+.dropzone { min-height: clamp(140px, 40vh, 320px); }
+
 /* ── Responsive ──────────────────────────────── */
 @media (max-width: 680px) {
   .app-header { padding: 0 14px; gap: 12px; }
@@ -743,12 +961,28 @@ input[type="color"] {
   .res-options { flex-direction: row; flex-wrap: wrap; }
 }
 
-/* ── Embed-friendly narrow layout ────────────── */
+/* ── Narrow / mobile ─────────────────────────── */
 @media (max-width: 480px) {
   .app-header { gap: 8px; }
   .app-title { display: none; }
+  .privacy-note { display: none; }
   .wrap { padding: 14px 10px; }
   .chip { padding: 4px 10px; font-size: 12px; }
   .result-value { font-size: 18px; }
   .calc-grid { gap: 6px; }
+
+  /* Compressor/Resizer action row stacks on small screens */
+  .cmp-action-row { flex-direction: column; }
+  .cmp-action-row button, .cmp-action-row .export-btn, .cmp-action-row .export-btn-secondary { width: 100%; }
+
+  /* Queue: hide size column to save space */
+  .cmp-queue-item { grid-template-columns: 1fr auto auto; }
+  .cmp-q-size { display: none; }
+
+  /* Trimmer: full-width set in/out buttons */
+  .trm-btn-row { flex-direction: column; }
+  .trm-btn-row .text-btn { width: 100%; }
+
+  /* Palette swatches: 2 columns on phone */
+  .pal-swatches { grid-template-columns: repeat(2, 1fr); }
 }
