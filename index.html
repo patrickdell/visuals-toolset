@@ -363,21 +363,11 @@
           <!-- Audio element (shown for audio-only files) -->
           <audio id="trm-audio" class="trm-audio" controls preload="metadata" style="display:none;width:100%"></audio>
 
-          <!-- Transport controls -->
-          <div class="trm-transport">
-            <div class="trm-step-group">
-              <button id="trm-step-back-frame"  class="trm-step-btn" title="Back 1 frame">&#x23EE; 1f</button>
-              <button id="trm-step-back-sec"    class="trm-step-btn" title="Back 1 second">&#x23EE; 1s</button>
-              <button id="trm-play-clip"        class="trm-play-btn" title="Preview clip between In and Out">&#9654; Preview clip</button>
-              <button id="trm-step-fwd-sec"     class="trm-step-btn" title="Forward 1 second">1s &#x23ED;</button>
-              <button id="trm-step-fwd-frame"   class="trm-step-btn" title="Forward 1 frame">1f &#x23ED;</button>
-            </div>
-          </div>
-
-          <!-- Timeline -->
+          <!-- Timeline with playhead needle -->
           <div class="trm-timeline">
-            <div class="trm-track-bg">
+            <div class="trm-track-bg" id="trm-track-bg">
               <div id="trm-track-fill" class="trm-track-fill"></div>
+              <div id="trm-playhead" class="trm-playhead"></div>
               <input id="trm-range-in"  class="trm-range trm-range-in"  type="range" min="0" max="100" step="0.1" value="0" />
               <input id="trm-range-out" class="trm-range trm-range-out" type="range" min="0" max="100" step="0.1" value="100" />
             </div>
@@ -388,10 +378,47 @@
             </div>
           </div>
 
-          <!-- Set in/out buttons -->
-          <div class="trm-btn-row">
-            <button id="trm-set-in"  class="text-btn">Set In at playhead</button>
-            <button id="trm-set-out" class="text-btn">Set Out at playhead</button>
+          <!-- 3-row control grid: Playhead / In Point / Out Point -->
+          <div class="trm-controls">
+            <!-- Playhead row -->
+            <span class="trm-ctrl-label">Playhead</span>
+            <div class="trm-ctrl-row">
+              <button id="trm-ph-back-frame" class="trm-step-btn" title="Step back 1 frame (←)">← 1f</button>
+              <button id="trm-ph-back-sec"   class="trm-step-btn" title="Step back 1 second (Shift+←)">← 1s</button>
+              <button id="trm-play-clip"     class="trm-mark-btn trm-centre-btn" title="Preview clip between In and Out (P)">▶ Preview clip</button>
+              <button id="trm-ph-fwd-sec"    class="trm-step-btn" title="Step forward 1 second (Shift+→)">1s →</button>
+              <button id="trm-ph-fwd-frame"  class="trm-step-btn" title="Step forward 1 frame (→)">1f →</button>
+            </div>
+            <!-- In Point row -->
+            <span class="trm-ctrl-label">In</span>
+            <div class="trm-ctrl-row">
+              <button id="trm-in-back-frame" class="trm-step-btn" title="Nudge In −1 frame (,)">← 1f</button>
+              <button id="trm-in-back-sec"   class="trm-step-btn" title="Nudge In −1 second">← 1s</button>
+              <button id="trm-set-in"        class="trm-mark-btn trm-centre-btn" title="Mark In at playhead (I)">Mark In <kbd>I</kbd></button>
+              <button id="trm-in-fwd-sec"    class="trm-step-btn" title="Nudge In +1 second">1s →</button>
+              <button id="trm-in-fwd-frame"  class="trm-step-btn" title="Nudge In +1 frame (.)">1f →</button>
+            </div>
+            <!-- Out Point row -->
+            <span class="trm-ctrl-label">Out</span>
+            <div class="trm-ctrl-row">
+              <button id="trm-out-back-frame" class="trm-step-btn" title="Nudge Out −1 frame (&lt;)">← 1f</button>
+              <button id="trm-out-back-sec"   class="trm-step-btn" title="Nudge Out −1 second">← 1s</button>
+              <button id="trm-set-out"        class="trm-mark-btn trm-centre-btn" title="Mark Out at playhead (O)">Mark Out <kbd>O</kbd></button>
+              <button id="trm-out-fwd-sec"    class="trm-step-btn" title="Nudge Out +1 second">1s →</button>
+              <button id="trm-out-fwd-frame"  class="trm-step-btn" title="Nudge Out +1 frame (&gt;)">1f →</button>
+            </div>
+          </div>
+
+          <!-- Keyboard shortcut legend -->
+          <div class="trm-kbd-legend">
+            <kbd>Space</kbd> Play/Pause &nbsp;&middot;&nbsp;
+            <kbd>I</kbd> Mark In &nbsp;&middot;&nbsp;
+            <kbd>O</kbd> Mark Out &nbsp;&middot;&nbsp;
+            <kbd>←</kbd><kbd>→</kbd> ±1 frame &nbsp;&middot;&nbsp;
+            <kbd>Shift</kbd>+<kbd>←</kbd><kbd>→</kbd> ±1 sec &nbsp;&middot;&nbsp;
+            <kbd>,</kbd><kbd>.</kbd> Nudge In ±1 frame &nbsp;&middot;&nbsp;
+            <kbd>&lt;</kbd><kbd>&gt;</kbd> Nudge Out ±1 frame &nbsp;&middot;&nbsp;
+            <kbd>P</kbd> Preview clip
           </div>
         </div>
 

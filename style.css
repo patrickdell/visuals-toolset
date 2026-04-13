@@ -783,47 +783,6 @@ input[type="color"] {
   margin-bottom: 8px;
 }
 
-/* Transport controls */
-.trm-transport {
-  margin: 10px 0 4px;
-}
-
-.trm-step-group {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.trm-step-btn {
-  background: var(--card2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  color: var(--muted);
-  cursor: pointer;
-  font-size: 12px;
-  padding: 5px 10px;
-  transition: border-color .15s, color .15s;
-  min-height: 36px;
-}
-.trm-step-btn:hover { border-color: var(--accent); color: var(--ink); }
-
-.trm-play-btn {
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-sm);
-  color: #fff;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 5px 16px;
-  transition: background .15s;
-  min-height: 36px;
-  flex: 1;
-  max-width: 180px;
-}
-.trm-play-btn:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
-
 .trm-warn {
   font-size: 13px;
   color: #f5a623;
@@ -834,7 +793,7 @@ input[type="color"] {
 }
 
 .trm-timeline {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .trm-track-bg {
@@ -844,6 +803,7 @@ input[type="color"] {
   border: 1px solid var(--line);
   border-radius: 4px;
   overflow: hidden;
+  cursor: crosshair;
 }
 
 .trm-track-fill {
@@ -853,6 +813,20 @@ input[type="color"] {
   background: var(--accent);
   opacity: .25;
   pointer-events: none;
+}
+
+/* Playhead needle — bright white vertical line */
+.trm-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+  pointer-events: none;
+  z-index: 3;
+  transform: translateX(-50%);
+  box-shadow: 0 0 4px rgba(0,0,0,.7);
+  left: 0;
 }
 
 /* Dual-thumb range: stack two <input type=range> on top of each other */
@@ -867,6 +841,7 @@ input[type="color"] {
   background: transparent;
   pointer-events: none;
   margin: 0;
+  z-index: 4;
 }
 
 .trm-range::-webkit-slider-thumb {
@@ -902,11 +877,90 @@ input[type="color"] {
   margin-top: 6px;
 }
 
-.trm-btn-row {
+/* ── 3-row control grid ─────────────────────── */
+.trm-controls {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 6px 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.trm-ctrl-label {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: right;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.trm-ctrl-row {
   display: flex;
-  gap: 8px;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Step buttons — compact monospace */
+.trm-step-btn {
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: monospace;
+  padding: 5px 7px;
+  min-width: 38px;
+  min-height: 36px;
+  transition: border-color .15s, color .15s;
+  white-space: nowrap;
+}
+.trm-step-btn:hover { border-color: var(--accent); color: var(--ink); }
+
+/* Mark In / Out / Preview — accent outline buttons */
+.trm-mark-btn {
+  background: var(--card2);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  min-height: 36px;
+  transition: background .15s, color .15s;
+}
+.trm-mark-btn:hover { background: var(--accent); color: #fff; }
+
+/* Centre action button stretches to fill remaining space */
+.trm-centre-btn { flex: 1; }
+
+/* Small keyboard badge inside mark buttons */
+.trm-mark-btn kbd {
+  font-size: 10px;
+  background: rgba(255,255,255,.12);
+  border-radius: 2px;
+  padding: 0 3px;
+  font-family: monospace;
+  font-weight: 400;
+}
+
+/* Keyboard shortcut legend */
+.trm-kbd-legend {
+  font-size: 11px;
+  color: var(--muted);
   margin-top: 10px;
-  flex-wrap: wrap;
+  line-height: 2;
+}
+.trm-kbd-legend kbd {
+  display: inline-block;
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: monospace;
+  font-size: 10px;
+  color: var(--ink);
 }
 
 /* ── Palette extractor ───────────────────────── */
@@ -1029,9 +1083,9 @@ input, select, textarea { font-size: 16px; }
   .cmp-queue-item { grid-template-columns: 1fr auto auto; }
   .cmp-q-size { display: none; }
 
-  /* Trimmer: full-width set in/out buttons */
-  .trm-btn-row { flex-direction: column; }
-  .trm-btn-row .text-btn { width: 100%; }
+  /* Trimmer: collapse controls grid on small screens */
+  .trm-controls { grid-template-columns: 40px 1fr; gap: 4px 6px; }
+  .trm-step-btn { min-width: 32px; padding: 5px 4px; font-size: 10px; }
 
   /* Palette swatches: 2 columns on phone */
   .pal-swatches { grid-template-columns: repeat(2, 1fr); }

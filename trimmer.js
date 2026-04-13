@@ -10,46 +10,74 @@ const SUPPORTED_VIDEO_EXTS = new Set(['mp4', 'mov', 'mkv', 'webm', 'm4v']);
 const SUPPORTED_AUDIO_EXTS = new Set(['mp3', 'aac', 'wav', 'm4a', 'ogg', 'flac', 'opus']);
 const UNSUPPORTED_EXTS     = new Set(['mxf', 'mts', 'm2ts']);
 
-// Estimated frames-per-second when we can't probe — used for frame stepping
 const DEFAULT_FPS = 30;
 
 export function initTrimmer() {
-  const dropzone     = document.getElementById('trm-dropzone');
-  const fileInput    = document.getElementById('trm-file-input');
-  const playerWrap   = document.getElementById('trm-player-wrap');
-  const videoEl      = document.getElementById('trm-video');
-  const audioEl      = document.getElementById('trm-audio');
-  const formatWarn   = document.getElementById('trm-format-warn');
-  const sizeWarn     = document.getElementById('trm-size-warn');
-  const rangeIn      = document.getElementById('trm-range-in');
-  const rangeOut     = document.getElementById('trm-range-out');
-  const inLabel      = document.getElementById('trm-in-label');
-  const outLabel     = document.getElementById('trm-out-label');
-  const clipLabel    = document.getElementById('trm-clip-label');
-  const setInBtn     = document.getElementById('trm-set-in');
-  const setOutBtn    = document.getElementById('trm-set-out');
-  const playClipBtn  = document.getElementById('trm-play-clip');
-  const stepBackFrame = document.getElementById('trm-step-back-frame');
-  const stepBackSec   = document.getElementById('trm-step-back-sec');
-  const stepFwdSec    = document.getElementById('trm-step-fwd-sec');
-  const stepFwdFrame  = document.getElementById('trm-step-fwd-frame');
-  const trimBtn      = document.getElementById('trm-trim-btn');
-  const progressWrap = document.getElementById('trm-progress-wrap');
-  const progressBar  = document.getElementById('trm-progress-bar');
+  const dropzone      = document.getElementById('trm-dropzone');
+  const fileInput     = document.getElementById('trm-file-input');
+  const playerWrap    = document.getElementById('trm-player-wrap');
+  const videoEl       = document.getElementById('trm-video');
+  const audioEl       = document.getElementById('trm-audio');
+  const formatWarn    = document.getElementById('trm-format-warn');
+  const sizeWarn      = document.getElementById('trm-size-warn');
+  const trackBg       = document.getElementById('trm-track-bg');
+  const playheadEl    = document.getElementById('trm-playhead');
+  const rangeIn       = document.getElementById('trm-range-in');
+  const rangeOut      = document.getElementById('trm-range-out');
+  const inLabel       = document.getElementById('trm-in-label');
+  const outLabel      = document.getElementById('trm-out-label');
+  const clipLabel     = document.getElementById('trm-clip-label');
+
+  // Playhead row
+  const phBackFrame   = document.getElementById('trm-ph-back-frame');
+  const phBackSec     = document.getElementById('trm-ph-back-sec');
+  const playClipBtn   = document.getElementById('trm-play-clip');
+  const phFwdSec      = document.getElementById('trm-ph-fwd-sec');
+  const phFwdFrame    = document.getElementById('trm-ph-fwd-frame');
+
+  // In point row
+  const inBackFrame   = document.getElementById('trm-in-back-frame');
+  const inBackSec     = document.getElementById('trm-in-back-sec');
+  const setInBtn      = document.getElementById('trm-set-in');
+  const inFwdSec      = document.getElementById('trm-in-fwd-sec');
+  const inFwdFrame    = document.getElementById('trm-in-fwd-frame');
+
+  // Out point row
+  const outBackFrame  = document.getElementById('trm-out-back-frame');
+  const outBackSec    = document.getElementById('trm-out-back-sec');
+  const setOutBtn     = document.getElementById('trm-set-out');
+  const outFwdSec     = document.getElementById('trm-out-fwd-sec');
+  const outFwdFrame   = document.getElementById('trm-out-fwd-frame');
+
+  const trimBtn       = document.getElementById('trm-trim-btn');
+  const progressWrap  = document.getElementById('trm-progress-wrap');
+  const progressBar   = document.getElementById('trm-progress-bar');
   const progressLabel = document.getElementById('trm-progress-label');
 
-  let currentFile  = null;
-  let blobUrl      = null;
-  let inPoint      = 0;
-  let outPoint     = 0;
-  let duration     = 0;
-  let isAudioOnly  = false;
-  let fps          = DEFAULT_FPS;
+  let currentFile       = null;
+  let blobUrl           = null;
+  let inPoint           = 0;
+  let outPoint          = 0;
+  let duration          = 0;
+  let isAudioOnly       = false;
+  let fps               = DEFAULT_FPS;
   let clipPreviewActive = false;
-  let clipPreviewStop   = null; // cleanup fn
+  let clipPreviewStop   = null;
 
-  // ── Active media element (video or audio) ─────────────────────────────────
+  // ── Active media element ──────────────────────────────────────────────────
   function media() { return isAudioOnly ? audioEl : videoEl; }
+
+  // ── Playhead needle ───────────────────────────────────────────────────────
+  function updatePlayhead() {
+    const pct = duration ? (media().currentTime / duration) * 100 : 0;
+    playheadEl.style.left = pct + '%';
+  }
+
+  // Keep needle updated while playing / seeking
+  videoEl.addEventListener('timeupdate', updatePlayhead);
+  videoEl.addEventListener('seeked',     updatePlayhead);
+  audioEl.addEventListener('timeupdate', updatePlayhead);
+  audioEl.addEventListener('seeked',     updatePlayhead);
 
   // ── Drop zone ─────────────────────────────────────────────────────────────
   dropzone.addEventListener('click', () => fileInput.click());
@@ -77,14 +105,11 @@ export function initTrimmer() {
     const ext = file.name.split('.').pop().toLowerCase();
     isAudioOnly = SUPPORTED_AUDIO_EXTS.has(ext) || file.type.startsWith('audio/');
 
-    // Show correct player element
     videoEl.style.display = isAudioOnly ? 'none' : '';
-    audioEl.style.display = isAudioOnly ? '' : 'none';
+    audioEl.style.display = isAudioOnly ? ''     : 'none';
 
-    // Format check
     formatWarn.style.display = UNSUPPORTED_EXTS.has(ext) ? '' : 'none';
 
-    // Size warning
     const mb = file.size / 1048576;
     sizeWarn.style.display = mb > 300 ? '' : 'none';
     sizeWarn.textContent = mb > 800
@@ -99,35 +124,42 @@ export function initTrimmer() {
       duration = med.duration;
       inPoint  = 0;
       outPoint = duration;
-
-      // Try to read fps from videoEl (only meaningful for video)
-      if (!isAudioOnly && videoEl.getVideoPlaybackQuality) {
-        // getVideoPlaybackQuality doesn't give fps directly; use a heuristic
-        fps = DEFAULT_FPS;
-      }
+      fps      = DEFAULT_FPS;
 
       [rangeIn, rangeOut].forEach(r => {
         r.min  = '0';
         r.max  = String(duration);
-        r.step = String(Math.min(0.01, duration / 10000)); // fine step
+        r.step = String(Math.min(0.01, duration / 10000));
       });
       rangeIn.value  = '0';
       rangeOut.value = String(duration);
 
       updateLabels();
+      updatePlayhead();
       playerWrap.style.display = '';
       dropzone.querySelector('.trm-drop-text').textContent = file.name;
       dropzone.classList.add('has-file');
-      trimBtn.disabled  = false;
+      trimBtn.disabled = false;
       playClipBtn.textContent = '▶ Preview clip';
       progressWrap.style.display = 'none';
     }, { once: true });
 
-    // Warm up FFmpeg
+    // Warm up FFmpeg in background
     getFFmpeg().catch(() => {});
   }
 
-  // ── Timeline scrubbers ────────────────────────────────────────────────────
+  // ── Click-to-seek on the track bar ────────────────────────────────────────
+  trackBg.addEventListener('pointerdown', e => {
+    if (!currentFile || !duration) return;
+    // Let range thumb pointer-events handle thumb drags naturally
+    if (e.target.classList.contains('trm-range')) return;
+    const rect = trackBg.getBoundingClientRect();
+    const fraction = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    media().currentTime = fraction * duration;
+    cancelClipPreview();
+  });
+
+  // ── Timeline range handle drag (seeks so user can preview the frame) ──────
   rangeIn.addEventListener('input', () => {
     inPoint = Math.min(Number(rangeIn.value), outPoint - 0.05);
     rangeIn.value = String(inPoint);
@@ -144,40 +176,68 @@ export function initTrimmer() {
     updateLabels();
   });
 
-  setInBtn.addEventListener('click', () => {
-    inPoint = Math.min(media().currentTime, outPoint - 0.05);
-    rangeIn.value = String(inPoint);
-    cancelClipPreview();
-    updateLabels();
-  });
-
-  setOutBtn.addEventListener('click', () => {
-    outPoint = Math.max(media().currentTime, inPoint + 0.05);
-    rangeOut.value = String(outPoint);
-    cancelClipPreview();
-    updateLabels();
-  });
-
-  // ── Step buttons ──────────────────────────────────────────────────────────
-  function stepMedia(delta) {
+  // ── Playhead step buttons ─────────────────────────────────────────────────
+  function stepPlayhead(delta) {
     if (!currentFile) return;
     cancelClipPreview();
     const med = media();
     med.currentTime = Math.max(0, Math.min(duration, med.currentTime + delta));
   }
 
-  stepBackFrame.addEventListener('click', () => stepMedia(-(1 / fps)));
-  stepFwdFrame .addEventListener('click', () => stepMedia(  1 / fps));
-  stepBackSec  .addEventListener('click', () => stepMedia(-1));
-  stepFwdSec   .addEventListener('click', () => stepMedia( 1));
+  phBackFrame.addEventListener('click', () => stepPlayhead(-(1 / fps)));
+  phFwdFrame .addEventListener('click', () => stepPlayhead(  1 / fps));
+  phBackSec  .addEventListener('click', () => stepPlayhead(-1));
+  phFwdSec   .addEventListener('click', () => stepPlayhead( 1));
+
+  // ── Mark In / Out at current playhead position ────────────────────────────
+  function markIn() {
+    if (!currentFile) return;
+    inPoint = Math.min(media().currentTime, outPoint - 0.05);
+    rangeIn.value = String(inPoint);
+    cancelClipPreview();
+    updateLabels();
+  }
+
+  function markOut() {
+    if (!currentFile) return;
+    outPoint = Math.max(media().currentTime, inPoint + 0.05);
+    rangeOut.value = String(outPoint);
+    cancelClipPreview();
+    updateLabels();
+  }
+
+  setInBtn .addEventListener('click', markIn);
+  setOutBtn.addEventListener('click', markOut);
+
+  // ── In / Out nudge buttons (do NOT seek the video) ────────────────────────
+  function nudgeIn(delta) {
+    if (!currentFile) return;
+    inPoint = Math.max(0, Math.min(inPoint + delta, outPoint - 0.05));
+    rangeIn.value = String(inPoint);
+    updateLabels();
+  }
+
+  function nudgeOut(delta) {
+    if (!currentFile) return;
+    outPoint = Math.max(inPoint + 0.05, Math.min(outPoint + delta, duration));
+    rangeOut.value = String(outPoint);
+    updateLabels();
+  }
+
+  inBackFrame .addEventListener('click', () => nudgeIn(-(1 / fps)));
+  inFwdFrame  .addEventListener('click', () => nudgeIn(  1 / fps));
+  inBackSec   .addEventListener('click', () => nudgeIn(-1));
+  inFwdSec    .addEventListener('click', () => nudgeIn( 1));
+
+  outBackFrame.addEventListener('click', () => nudgeOut(-(1 / fps)));
+  outFwdFrame .addEventListener('click', () => nudgeOut(  1 / fps));
+  outBackSec  .addEventListener('click', () => nudgeOut(-1));
+  outFwdSec   .addEventListener('click', () => nudgeOut( 1));
 
   // ── Clip preview ──────────────────────────────────────────────────────────
   playClipBtn.addEventListener('click', () => {
     if (!currentFile) return;
-    if (clipPreviewActive) {
-      cancelClipPreview();
-      return;
-    }
+    if (clipPreviewActive) { cancelClipPreview(); return; }
     startClipPreview();
   });
 
@@ -187,22 +247,19 @@ export function initTrimmer() {
     med.currentTime = inPoint;
 
     const onTimeUpdate = () => {
-      if (med.currentTime >= outPoint) {
-        cancelClipPreview();
-      }
+      if (med.currentTime >= outPoint) cancelClipPreview();
     };
-
     const onEnded = () => cancelClipPreview();
 
     med.addEventListener('timeupdate', onTimeUpdate);
-    med.addEventListener('ended', onEnded);
+    med.addEventListener('ended',      onEnded);
     med.play();
     clipPreviewActive = true;
     playClipBtn.textContent = '⏹ Stop preview';
 
     clipPreviewStop = () => {
       med.removeEventListener('timeupdate', onTimeUpdate);
-      med.removeEventListener('ended', onEnded);
+      med.removeEventListener('ended',      onEnded);
       if (!med.paused) med.pause();
     };
   }
@@ -213,6 +270,7 @@ export function initTrimmer() {
     playClipBtn.textContent = '▶ Preview clip';
   }
 
+  // ── Labels + track fill ───────────────────────────────────────────────────
   function updateLabels() {
     inLabel.textContent   = 'In: '   + fmt(inPoint);
     outLabel.textContent  = 'Out: '  + fmt(outPoint);
@@ -227,7 +285,66 @@ export function initTrimmer() {
     }
   }
 
-  // ── Trim ──────────────────────────────────────────────────────────────────
+  // ── Keyboard shortcuts ────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('panel-trim').classList.contains('visible')) return;
+    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+
+    const med = media();
+
+    switch (e.key) {
+      case ' ':
+        e.preventDefault();
+        if (med.paused) med.play();
+        else { med.pause(); cancelClipPreview(); }
+        break;
+
+      case 'i': case 'I':
+        e.preventDefault();
+        markIn();
+        break;
+
+      case 'o': case 'O':
+        e.preventDefault();
+        markOut();
+        break;
+
+      case 'ArrowLeft':
+        e.preventDefault();
+        stepPlayhead(e.shiftKey ? -1 : -(1 / fps));
+        break;
+
+      case 'ArrowRight':
+        e.preventDefault();
+        stepPlayhead(e.shiftKey ? 1 : (1 / fps));
+        break;
+
+      // , = nudge In −1 frame  |  < (Shift+,) = nudge Out −1 frame
+      case ',':
+        nudgeIn(-(1 / fps));
+        break;
+      case '<':
+        nudgeOut(-(1 / fps));
+        break;
+
+      // . = nudge In +1 frame  |  > (Shift+.) = nudge Out +1 frame
+      case '.':
+        nudgeIn(1 / fps);
+        break;
+      case '>':
+        nudgeOut(1 / fps);
+        break;
+
+      case 'p': case 'P':
+        e.preventDefault();
+        if (!currentFile) break;
+        if (clipPreviewActive) cancelClipPreview();
+        else startClipPreview();
+        break;
+    }
+  });
+
+  // ── Trim & Save ───────────────────────────────────────────────────────────
   trimBtn.addEventListener('click', runTrim);
 
   async function runTrim() {
@@ -240,7 +357,6 @@ export function initTrimmer() {
     const ext = currentFile.name.split('.').pop().toLowerCase();
     const isAudio = isAudioOnly;
 
-    // Output extension: match input for audio; video → keep container, fallback mp4
     const outExt = isAudio
       ? (SUPPORTED_AUDIO_EXTS.has(ext) ? ext : 'mp3')
       : (SUPPORTED_VIDEO_EXTS.has(ext) ? ext : 'mp4');
@@ -280,7 +396,7 @@ export function initTrimmer() {
       try { await ff.deleteFile(outFile); } catch (_) {}
 
       setProgress(100, 'Done — ' + (blob.size / 1048576).toFixed(1) + ' MB');
-      await saveFile(blob, outName, isAudio ? 'audio/' + outExt : 'video/' + outExt);
+      await saveFile(blob, outName, mimeType);
       setTimeout(() => { progressWrap.style.display = 'none'; }, 2500);
 
     } catch (err) {
