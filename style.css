@@ -1189,3 +1189,122 @@ input, select, textarea { font-size: 16px; }
   .tabs { display: none; }
   .nav-hamburger { display: flex; align-items: center; }
 }
+
+/* ── C2PA Reader ────────────────────────────────────────────────────────────── */
+.c2pa-status-card { margin-bottom: 0; }
+
+.c2pa-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.c2pa-badge--signed {
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+}
+.c2pa-badge--none {
+  background: color-mix(in srgb, var(--muted) 15%, transparent);
+  color: var(--muted);
+  border: 1px solid color-mix(in srgb, var(--muted) 35%, transparent);
+}
+.c2pa-badge--error {
+  background: color-mix(in srgb, var(--error) 15%, transparent);
+  color: var(--error);
+  border: 1px solid color-mix(in srgb, var(--error) 35%, transparent);
+}
+.c2pa-badge--rel {
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  font-size: 11px;
+  padding: 2px 8px;
+  font-weight: 500;
+}
+
+.c2pa-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 8px 0 0;
+}
+
+.c2pa-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 13px;
+}
+@keyframes c2pa-spin { to { transform: rotate(360deg); } }
+.c2pa-spin { animation: c2pa-spin 0.9s linear infinite; }
+
+.c2pa-section { margin-top: 12px; }
+
+.c2pa-value {
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.c2pa-rows { display: flex; flex-direction: column; gap: 6px; }
+.c2pa-rows--nested {
+  padding-left: 10px;
+  border-left: 2px solid var(--line);
+  margin-top: 4px;
+}
+
+.c2pa-assertion-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.c2pa-key {
+  color: var(--muted);
+  min-width: 130px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.c2pa-val { color: var(--ink); flex: 1; min-width: 0; }
+
+.c2pa-muted { color: var(--muted); font-size: 12px; }
+
+.c2pa-action-list {
+  margin: 0;
+  padding: 0 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+.c2pa-action-list li { list-style: disc; }
+
+.c2pa-code {
+  display: block;
+  font-family: ui-monospace, Consolas, 'Cascadia Code', monospace;
+  font-size: 11px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.c2pa-ingredient {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.c2pa-ingredient:last-child { border-bottom: none; }
+.c2pa-ingredient-title { color: var(--ink); flex: 1; }

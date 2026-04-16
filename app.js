@@ -12,6 +12,7 @@ import { initExtractor }           from './extractor.js';
 import { initResizer }             from './resizer.js';
 import { initPalette }             from './palette.js';
 import { initLabeller }           from './labeller.js';
+import { initC2paReader }         from './c2pa-reader.js';
 
 // ── Build preset chips ────────────────────────────────────────────────────
 
@@ -48,6 +49,7 @@ const panels  = {
   resize:   'panel-resize',
   palette:  'panel-palette',
   label:    'panel-label',
+  c2pa:     'panel-c2pa',
 };
 
 let drawer; // set up below before first activateTab call
@@ -89,6 +91,7 @@ const cropChips = document.getElementById('cropChips');
 
 initEmbed();
 initLabeller();
+initC2paReader();
 initCompressor();
 initTrimmer();
 initExtractor();

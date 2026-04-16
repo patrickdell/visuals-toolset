@@ -43,6 +43,7 @@
       <button class="tab-btn" data-tab="resize">Image Resize</button>
       <button class="tab-btn" data-tab="palette">Palette</button>
       <button class="tab-btn" data-tab="label">Labeller</button>
+      <button class="tab-btn" data-tab="c2pa">C2PA Reader</button>
     </nav>
     <button class="nav-hamburger" id="nav-hamburger" aria-label="Open tools menu">
       <svg width="18" height="18" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -631,6 +632,35 @@
 
       </div>
       <div class="tab-permalink"><a class="tab-permalink-link" href="#label" data-permalink="label">🔗 Link to this tool</a></div>
+    </div>
+  </section>
+
+  <!-- ── C2PA Reader panel ─────────────────────────────────────────── -->
+  <section id="panel-c2pa">
+    <div class="wrap">
+      <div class="cmp-layout">
+
+        <!-- Drop zone -->
+        <div id="c2pa-dropzone" class="dropzone card cmp-dropzone">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <div class="c2pa-drop-text">Drop an image or video here, or click to browse</div>
+          <div class="dropzone-hint">JPEG, PNG, WebP, HEIC, AVIF, MP4 &mdash; reads embedded Content Credentials (C2PA)</div>
+          <input id="c2pa-file-input" type="file" accept="image/*,video/*" hidden />
+        </div>
+
+        <!-- Result area -->
+        <div id="c2pa-result" style="display:none">
+          <!-- Status badge -->
+          <div id="c2pa-status" class="card sidebar-section c2pa-status-card"></div>
+          <!-- Manifest detail sections -->
+          <div id="c2pa-manifest" style="display:none"></div>
+        </div>
+
+      </div><!-- /cmp-layout -->
+      <div class="tab-permalink"><a class="tab-permalink-link" href="#c2pa" data-permalink="c2pa">🔗 Link to this tool</a></div>
     </div>
   </section>
 
