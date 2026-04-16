@@ -50,6 +50,8 @@ const panels  = {
   label:    'panel-label',
 };
 
+let drawer; // set up below before first activateTab call
+
 function activateTab(tab) {
   if (!panels[tab]) tab = 'embed';
   tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
@@ -57,6 +59,11 @@ function activateTab(tab) {
   document.getElementById(panels[tab])?.classList.add('visible');
   history.replaceState(null, '', '#' + tab);
   localStorage.setItem('ar_tab', tab);
+  if (drawer) {
+    drawer.querySelectorAll('.nav-drawer-item').forEach(item => {
+      item.classList.toggle('active', item.dataset.tab === tab);
+    });
+  }
 }
 
 tabBtns.forEach(btn => {
@@ -199,6 +206,48 @@ if (savedPreset) {
 } else {
   selectRatio(activePreset);
 }
+
+// ── Nav drawer (mobile) ──────────────────────────────────────────────────────
+const backdrop = document.createElement('div');
+backdrop.className = 'nav-drawer-backdrop';
+
+drawer = document.createElement('nav');
+drawer.className = 'nav-drawer';
+drawer.innerHTML = `
+  <div class="nav-drawer-header">
+    <span>Tools</span>
+    <button class="nav-drawer-close" id="drawer-close" aria-label="Close menu">&times;</button>
+  </div>
+`;
+
+tabBtns.forEach(tb => {
+  const btn = document.createElement('button');
+  btn.className = 'nav-drawer-item';
+  btn.dataset.tab = tb.dataset.tab;
+  btn.textContent = tb.textContent.trim();
+  btn.addEventListener('click', () => { activateTab(btn.dataset.tab); closeDrawer(); });
+  drawer.appendChild(btn);
+});
+
+const drawerAbout = document.createElement('div');
+drawerAbout.className = 'nav-drawer-about';
+drawerAbout.innerHTML = `
+  <strong>Visuals Toolset</strong>
+  A privacy-first collection of browser-based media tools.<br>
+  All processing happens locally — nothing is uploaded.
+`;
+drawer.appendChild(drawerAbout);
+
+document.body.appendChild(backdrop);
+document.body.appendChild(drawer);
+
+function openDrawer()  { drawer.classList.add('open'); backdrop.classList.add('open'); }
+function closeDrawer() { drawer.classList.remove('open'); backdrop.classList.remove('open'); }
+
+document.getElementById('nav-hamburger').addEventListener('click', openDrawer);
+document.getElementById('drawer-close').addEventListener('click', closeDrawer);
+backdrop.addEventListener('click', closeDrawer);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
 
 // Hash → localStorage → embed
 const hash = location.hash.replace('#', '');

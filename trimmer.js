@@ -53,6 +53,19 @@ export function initTrimmer() {
   const progressWrap  = document.getElementById('trm-progress-wrap');
   const progressBar   = document.getElementById('trm-progress-bar');
   const progressLabel = document.getElementById('trm-progress-label');
+  const saveHint      = document.getElementById('trm-save-hint');
+
+  // ── Platform-aware save hint ──────────────────────────────────────────────
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/i.test(ua)) {
+    trimBtn.textContent = 'Trim & Save to Camera Roll';
+    saveHint.textContent = '📷 Tap "Save Video" in the share sheet to add directly to your Photos library.';
+    saveHint.style.display = '';
+  } else if (/Android/i.test(ua)) {
+    trimBtn.textContent = 'Trim & Save to Gallery';
+    saveHint.textContent = '📷 Choose your gallery or files app from the share sheet to save the trimmed clip.';
+    saveHint.style.display = '';
+  }
 
   let currentFile       = null;
   let blobUrl           = null;
@@ -412,6 +425,23 @@ export function initTrimmer() {
   // ── Save ──────────────────────────────────────────────────────────────────
   async function saveFile(blob, name, mime) {
     const ext = name.split('.').pop();
+
+    // On mobile (iOS / Android) prefer Web Share API — surfaces "Save to Photos"
+    // on iOS and share-to-gallery options on Android.
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile && navigator.canShare) {
+      const shareFile = new File([blob], name, { type: mime });
+      if (navigator.canShare({ files: [shareFile] })) {
+        try {
+          await navigator.share({ files: [shareFile], title: name });
+          return;
+        } catch (e) {
+          if (e.name === 'AbortError') return; // user cancelled share sheet
+          console.warn('[trimmer] Web Share failed, falling back', e);
+        }
+      }
+    }
+
     if ('showSaveFilePicker' in window) {
       try {
         const fh = await window.showSaveFilePicker({

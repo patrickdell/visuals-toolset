@@ -33,7 +33,10 @@ function extractIframeSrc(code) {
 
 function parseYouTube(input) {
   input = input.trim();
-  if (input.startsWith('<')) { const s = extractIframeSrc(input); return s?.includes('youtube') ? s : null; }
+  if (input.startsWith('<')) {
+    const s = extractIframeSrc(input);
+    return s?.includes('youtube') ? cleanYouTubeEmbedUrl(s) : null;
+  }
   try {
     const url = new URL(input);
     if (url.hostname === 'youtu.be') return 'https://www.youtube.com/embed/' + url.pathname.slice(1).split('/')[0];
@@ -43,10 +46,11 @@ function parseYouTube(input) {
     if (live) return 'https://www.youtube.com/embed/' + live[1];
     const v = url.searchParams.get('v');
     if (v) return 'https://www.youtube.com/embed/' + v;
-    if (url.pathname.includes('/embed/')) return input;
+    if (url.pathname.includes('/embed/')) return cleanYouTubeEmbedUrl(input);
   } catch (_) {}
   const m = input.match(/(?:v=|\/embed\/|youtu\.be\/|\/shorts\/|\/live\/)([A-Za-z0-9_-]{11})/);
-  return m ? 'https://www.youtube.com/embed/' + m[1] : null;
+  const raw = m ? 'https://www.youtube.com/embed/' + m[1] : null;
+  return raw ? cleanYouTubeEmbedUrl(raw) : null;
 }
 
 function parseYTShorts(input) {
@@ -84,9 +88,26 @@ function parseInstagram(input) {
 
 function parseGeneric(input) {
   input = input.trim();
+  if (!/^https?:\/\//i.test(input) && !input.startsWith('<')) return null;
   if (input.startsWith('<')) return extractIframeSrc(input);
-  if (/^https?:\/\/|^\/\//.test(input)) return input;
-  return null;
+  return input;
+}
+
+// ── URL helpers ───────────────────────────────────────────────────────────
+
+function cleanYouTubeEmbedUrl(url) {
+  try {
+    const u = new URL(url);
+    ['si', 'feature', 'app', 'pp', 'list'].forEach(p => u.searchParams.delete(p));
+    return u.toString();
+  } catch { return url; }
+}
+
+function isSoundCloudSet(url) {
+  try {
+    const parts = new URL(url).pathname.split('/').filter(Boolean);
+    return parts.length >= 2 && parts[1] === 'sets';
+  } catch { return false; }
 }
 
 // ── New service parsers ────────────────────────────────────────────────────
@@ -244,6 +265,7 @@ function buildOptionsRow(svc) {
     </select>
   </div>
   <button class="e-btn e-btn-primary" data-gen="twitter">Generate</button>
+  <button class="e-btn-clear" data-clear="twitter">Clear</button>
 </div>`;
   }
   if (svc.special === 'spotify') {
@@ -257,6 +279,7 @@ function buildOptionsRow(svc) {
     </select>
   </div>
   <button class="e-btn e-btn-primary" data-gen="spotify">Generate</button>
+  <button class="e-btn-clear" data-clear="spotify">Clear</button>
 </div>`;
   }
   if (svc.special === 'soundcloud') {
@@ -266,6 +289,7 @@ function buildOptionsRow(svc) {
     <input type="color" id="eb-soundcloud" value="#da161f">
   </div>
   <button class="e-btn e-btn-primary" data-gen="soundcloud">Generate</button>
+  <button class="e-btn-clear" data-clear="soundcloud">Clear</button>
 </div>`;
   }
   // Standard
@@ -279,6 +303,7 @@ function buildOptionsRow(svc) {
     <input type="color" id="eb-${svc.id}" value="#000000">
   </div>
   <button class="e-btn e-btn-primary" data-gen="${svc.id}">Generate</button>
+  <button class="e-btn-clear" data-clear="${svc.id}">Clear</button>
 </div>`;
 }
 
@@ -375,12 +400,21 @@ export function initEmbed() {
     document.getElementById('ep-' + id).classList.add('active');
   });
 
-  // Generate + copy + swatches + Enter key
+  // Generate + copy + clear + swatches + Enter key
   panels.addEventListener('click', e => {
     const gen = e.target.closest('[data-gen]');
     if (gen) { handleGenerate(gen.dataset.gen); return; }
     const copy = e.target.closest('[data-ecopy]');
     if (copy) { copyText(document.getElementById('ec-' + copy.dataset.ecopy).value, copy); return; }
+    const clr = e.target.closest('[data-clear]');
+    if (clr) {
+      const id = clr.dataset.clear;
+      document.getElementById('ei-' + id).value = '';
+      const ee = document.getElementById('ee-' + id);
+      ee.textContent = ''; ee.classList.remove('visible');
+      document.getElementById('eo-' + id).classList.remove('visible');
+      return;
+    }
     const swatch = e.target.closest('.e-swatch');
     if (swatch) {
       const picker = document.getElementById(swatch.closest('.e-swatches').dataset.target);
@@ -395,6 +429,19 @@ export function initEmbed() {
       const panel = e.target.closest('.svc-panel');
       if (panel) handleGenerate(panel.id.replace('ep-', ''));
     }
+  });
+
+  // Auto-generate on paste into the embed panel area
+  panels.addEventListener('paste', e => {
+    const text = (e.clipboardData || window.clipboardData).getData('text').trim();
+    if (!text) return;
+    const activePanel = panels.querySelector('.svc-panel.active');
+    if (!activePanel) return;
+    const input = activePanel.querySelector('input[type="url"], textarea');
+    if (!input || document.activeElement === input) return; // don't double-fire if already focused
+    input.value = text;
+    const svcId = activePanel.id.replace('ep-', '');
+    setTimeout(() => handleGenerate(svcId), 100);
   });
 
   function showError(svcId, msg) {
@@ -463,7 +510,7 @@ export function initEmbed() {
     // ── SoundCloud ────────────────────────────────────────────────────────
     if (svcId === 'soundcloud') {
       const color      = (document.getElementById('eb-soundcloud')?.value ?? '#da161f').replace('#', '');
-      const height     = /\/sets\//.test(src) ? 450 : 166;
+      const height     = isSoundCloudSet(src) ? 450 : 166;
       const floatRight = document.getElementById('ef-soundcloud')?.checked;
       const embedUrl   = `https://w.soundcloud.com/player/?url=${encodeURIComponent(src)}&color=%23${color}&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`;
       const iframe     = `<iframe width="100%" height="${height}" scrolling="no" frameborder="no" allow="autoplay" src="${embedUrl}"></iframe>`;

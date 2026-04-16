@@ -1120,3 +1120,72 @@ input, select, textarea { font-size: 16px; }
   /* Palette swatches: 2 columns on phone */
   .pal-swatches { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ── Hamburger button ──────────────────────────────────────────────────────── */
+.nav-hamburger {
+  display: none;
+  background: none; border: none; cursor: pointer;
+  color: var(--ink); padding: 6px; border-radius: 6px;
+  margin-left: auto;
+}
+.nav-hamburger:hover { background: var(--card2); }
+.nav-hamburger-label { font-size: 13px; font-weight: 600; letter-spacing: .01em; }
+
+/* ── Nav drawer ────────────────────────────────────────────────────────────── */
+.nav-drawer-backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.55); z-index: 200;
+}
+.nav-drawer-backdrop.open { display: block; }
+
+.nav-drawer {
+  position: fixed; top: 0; right: 0; bottom: 0; width: 260px;
+  background: var(--card); border-left: 1px solid var(--line);
+  z-index: 201; transform: translateX(100%);
+  transition: transform .22s ease; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.nav-drawer.open { transform: translateX(0); }
+
+.nav-drawer-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; border-bottom: 1px solid var(--line); font-weight: 600;
+}
+.nav-drawer-close {
+  background: none; border: none; cursor: pointer; color: var(--ink);
+  padding: 4px; border-radius: 4px; font-size: 1.3rem; line-height: 1;
+}
+.nav-drawer-close:hover { background: var(--card2); }
+
+.nav-drawer-item {
+  display: block; width: 100%; text-align: left;
+  padding: 12px 18px; background: none; border: none; border-bottom: 1px solid var(--line);
+  cursor: pointer; color: var(--ink); font-size: .95rem; font-family: inherit;
+}
+.nav-drawer-item:hover  { background: var(--card2); }
+.nav-drawer-item.active { background: var(--card2); font-weight: 600; color: var(--accent); }
+
+.nav-drawer-about {
+  margin-top: auto; padding: 18px 16px; border-top: 1px solid var(--line);
+  font-size: .82rem; color: var(--muted); line-height: 1.55;
+}
+.nav-drawer-about strong { display: block; font-size: .95rem; color: var(--ink); margin-bottom: 4px; }
+
+/* ── Embed clear button ────────────────────────────────────────────────────── */
+.e-btn-clear {
+  background: none; border: 1px solid var(--line); color: var(--muted);
+  padding: 8px 14px; border-radius: var(--radius-sm); cursor: pointer;
+  font-size: 13px; font-weight: 500; white-space: nowrap; font-family: inherit;
+}
+.e-btn-clear:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ── Trimmer save hint ─────────────────────────────────────────────────────── */
+.trm-save-hint {
+  margin: 6px 0 0; font-size: 12px; color: var(--muted); line-height: 1.4;
+}
+
+/* ── Show hamburger on mobile ──────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .tabs { display: none; }
+  .nav-hamburger { display: flex; align-items: center; }
+}
