@@ -727,6 +727,12 @@
           </div>
 
           <div class="sidebar-section">
+            <div class="chips-label">Vertical position</div>
+            <input type="range" id="wfr-wave-pos" min="0" max="100" value="50" style="width:100%;accent-color:var(--accent)">
+            <div class="wfr-pos-labels"><span>Top</span><span>Centre</span><span>Bottom</span></div>
+          </div>
+
+          <div class="sidebar-section">
             <div class="chips-label">Bar width</div>
             <div class="chip-row" id="wfr-barwidth-chips"></div>
           </div>
@@ -739,7 +745,8 @@
 
           <div class="sidebar-section" style="display:flex;flex-direction:column;gap:8px">
             <button id="wfr-play-btn"    class="export-btn-secondary" disabled>▶ Preview</button>
-            <button id="wfr-export-btn"  class="export-btn"           disabled>Export WebM video</button>
+            <button id="wfr-export-mp4"  class="export-btn"           disabled>Export MP4 (H.264)</button>
+            <button id="wfr-export-btn"  class="export-btn-secondary" disabled>Export WebM (VP9)</button>
             <button id="wfr-export-png"  class="export-btn-secondary" disabled>Export PNG sequence ↓</button>
             <p class="wfr-png-note">PNG sequence: transparent frames, importable directly in Final Cut Pro, Premiere &amp; After Effects. Audio exported separately.</p>
             <div id="wfr-progress-wrap" class="cmp-progress-wrap" style="display:none">

@@ -57,7 +57,9 @@ export function initWaveformRenderer() {
   const waveOpacity    = document.getElementById('wfr-wave-opacity');
   const opacityVal     = document.getElementById('wfr-opacity-val');
   const waveHeight     = document.getElementById('wfr-wave-height');
+  const wavePos        = document.getElementById('wfr-wave-pos');
   const playBtn        = document.getElementById('wfr-play-btn');
+  const exportMp4Btn   = document.getElementById('wfr-export-mp4');
   const exportBtn      = document.getElementById('wfr-export-btn');
   const exportPngBtn   = document.getElementById('wfr-export-png');
   const progressWrap   = document.getElementById('wfr-progress-wrap');
@@ -177,6 +179,7 @@ export function initWaveformRenderer() {
     redrawStatic();
   });
   waveHeight.addEventListener('input', redrawStatic);
+  wavePos.addEventListener('input', redrawStatic);
 
   // ── Initial canvas size ─────────────────────────────────────────────────────
   resizePreviewCanvas();
@@ -226,6 +229,7 @@ export function initWaveformRenderer() {
     }
 
     playBtn.disabled      = false;
+    exportMp4Btn.disabled = false;
     exportBtn.disabled    = false;
     exportPngBtn.disabled = false;
     canvasHint.style.display = 'none';
@@ -320,6 +324,7 @@ export function initWaveformRenderer() {
   function drawStaticWave(c, W, H, peaks) {
     const heightFrac = Number(waveHeight.value) / 100;
     const maxAmp = (H / 2) * heightFrac;
+    const cy  = H * (Number(wavePos.value) / 100);
     const col = waveColor();
     c.fillStyle   = col;
     c.strokeStyle = col;
@@ -329,7 +334,7 @@ export function initWaveformRenderer() {
       c.lineWidth = Math.max(1, selectedBar.px);
       for (let i = 0; i < W; i++) {
         const amp = peaks[i] * maxAmp;
-        const y   = H / 2 - amp;
+        const y   = cy - amp;
         i === 0 ? c.moveTo(i, y) : c.lineTo(i, y);
       }
       c.stroke();
@@ -352,9 +357,9 @@ export function initWaveformRenderer() {
       const x   = b * step;
 
       if (selectedStyle === 'bars') {
-        c.fillRect(x, H / 2 - amp, bw, amp || 1);
+        c.fillRect(x, cy - amp, bw, amp || 1);
       } else { // mirrored
-        c.fillRect(x, H / 2 - amp, bw, amp * 2 || 1);
+        c.fillRect(x, cy - amp, bw, amp * 2 || 1);
       }
     }
   }
@@ -363,6 +368,7 @@ export function initWaveformRenderer() {
     // data = Uint8Array from analyser.getByteTimeDomainData
     const heightFrac = Number(waveHeight.value) / 100;
     const maxAmp = (H / 2) * heightFrac;
+    const cy  = H * (Number(wavePos.value) / 100);
     const col = waveColor();
     c.fillStyle   = col;
     c.strokeStyle = col;
@@ -372,7 +378,7 @@ export function initWaveformRenderer() {
       c.lineWidth = Math.max(1, selectedBar.px);
       for (let i = 0; i < W; i++) {
         const sample = (data[Math.floor(i * data.length / W)] / 128.0) - 1.0;
-        const y = H / 2 - sample * maxAmp;
+        const y = cy - sample * maxAmp;
         i === 0 ? c.moveTo(i, y) : c.lineTo(i, y);
       }
       c.stroke();
@@ -407,9 +413,9 @@ export function initWaveformRenderer() {
       const x   = b * step;
 
       if (selectedStyle === 'bars') {
-        c.fillRect(x, H / 2 - amp, bw, amp || 1);
+        c.fillRect(x, cy - amp, bw, amp || 1);
       } else {
-        c.fillRect(x, H / 2 - amp, bw, amp * 2 || 1);
+        c.fillRect(x, cy - amp, bw, amp * 2 || 1);
       }
     }
   }
@@ -468,15 +474,17 @@ export function initWaveformRenderer() {
   }
 
   // ── Export ──────────────────────────────────────────────────────────────────
-  exportBtn.addEventListener('click',    () => { if (!isExporting) exportVideo(); });
+  exportMp4Btn.addEventListener('click', () => { if (!isExporting) exportVideo('mp4'); });
+  exportBtn.addEventListener('click',    () => { if (!isExporting) exportVideo('webm'); });
   exportPngBtn.addEventListener('click', () => { if (!isExporting) exportPngSequence(); });
 
-  async function exportVideo() {
+  async function exportVideo(format = 'webm') {
     if (!audioEl) return;
     stopPreview();
     isExporting = true;
-    exportBtn.disabled = true;
-    playBtn.disabled   = true;
+    exportMp4Btn.disabled = true;
+    exportBtn.disabled    = true;
+    playBtn.disabled      = true;
     progressWrap.style.display = '';
     progressBar.style.width = '0%';
     progressLabel.textContent = 'Recording…';
@@ -509,10 +517,35 @@ export function initWaveformRenderer() {
       ...dest.stream.getAudioTracks(),
     ]);
 
-    // Pick best supported MIME
-    const mimeType = bgMode === 'transparent'
-      ? (MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm')
-      : (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm');
+    // Pick MIME type based on requested format
+    let mimeType, ext;
+    if (format === 'mp4') {
+      // H.264 MP4 — supported on Safari and Chrome 130+
+      const mp4Candidates = [
+        'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+        'video/mp4;codecs=avc1,mp4a.40.2',
+        'video/mp4;codecs=avc1',
+        'video/mp4',
+      ];
+      const supported = mp4Candidates.find(t => MediaRecorder.isTypeSupported(t));
+      if (!supported) {
+        alert('H.264 MP4 export is not supported in this browser.\nTry Safari, or use Export WebM instead.');
+        isExporting = false;
+        exportMp4Btn.disabled = false;
+        exportBtn.disabled    = false;
+        playBtn.disabled      = false;
+        progressWrap.style.display = 'none';
+        return;
+      }
+      mimeType = supported;
+      ext = 'mp4';
+    } else {
+      // VP9 WebM (default)
+      mimeType = bgMode === 'transparent'
+        ? (MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9' : 'video/webm')
+        : (MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus') ? 'video/webm;codecs=vp9,opus' : 'video/webm');
+      ext = 'webm';
+    }
 
     const chunks = [];
     const recorder = new MediaRecorder(combined, { mimeType });
@@ -520,13 +553,13 @@ export function initWaveformRenderer() {
 
     recorder.onstop = async () => {
       const blob = new Blob(chunks, { type: mimeType });
-      const ext  = 'webm';
       const name = 'waveform_' + selectedSize.label.replace(':', 'x') + '.' + ext;
       await saveFile(blob, name, mimeType);
       exportCtx.close();
       isExporting = false;
-      exportBtn.disabled = false;
-      playBtn.disabled   = false;
+      exportMp4Btn.disabled = false;
+      exportBtn.disabled    = false;
+      playBtn.disabled      = false;
       progressWrap.style.display = 'none';
     };
 
@@ -644,6 +677,7 @@ export function initWaveformRenderer() {
     await saveFile(zipBlob, zipName, 'application/zip');
 
     isExporting = false;
+    exportMp4Btn.disabled = false;
     exportBtn.disabled    = false;
     exportPngBtn.disabled = false;
     playBtn.disabled      = false;

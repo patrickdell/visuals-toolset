@@ -1241,6 +1241,10 @@ input, select, textarea { font-size: 16px; }
 .wfr-png-note {
   font-size: .75rem; color: var(--muted); margin: 2px 0 0; line-height: 1.45;
 }
+.wfr-pos-labels {
+  display: flex; justify-content: space-between;
+  font-size: .72rem; color: var(--muted); margin-top: 2px;
+}
 
 @media (max-width: 640px) {
   .wfr-layout { flex-direction: column; }
