@@ -18,6 +18,13 @@ const WAVE_STYLES = [
   { label: 'Line',     id: 'line'     },
 ];
 
+const BAR_WIDTHS = [
+  { label: 'Fine',   px: 1, gap: 0 },
+  { label: 'Normal', px: 3, gap: 1 },
+  { label: 'Thick',  px: 6, gap: 1 },
+  { label: 'EQ',     px: 8, gap: 2 },
+];
+
 const BG_MODES = [
   { label: 'Colour',      id: 'color'       },
   { label: 'Transparent', id: 'transparent' },
@@ -35,7 +42,8 @@ export function initWaveformRenderer() {
   const bgChipsEl      = document.getElementById('wfr-bg-chips');
   const bgColorRow     = document.getElementById('wfr-bg-color-row');
   const bgColorPicker  = document.getElementById('wfr-bg-color');
-  const styleChipsEl   = document.getElementById('wfr-style-chips');
+  const styleChipsEl    = document.getElementById('wfr-style-chips');
+  const barWidthChipsEl = document.getElementById('wfr-barwidth-chips');
   const waveColorPicker= document.getElementById('wfr-wave-color');
   const waveOpacity    = document.getElementById('wfr-wave-opacity');
   const opacityVal     = document.getElementById('wfr-opacity-val');
@@ -59,6 +67,7 @@ export function initWaveformRenderer() {
   let bgBlobUrl      = null;
   let selectedSize   = SIZE_PRESETS[0];  // default 9:16
   let selectedStyle  = 'bars';
+  let selectedBar    = BAR_WIDTHS[0];    // { px, gap }
   let bgMode         = 'color';          // 'color' | 'transparent'
   let analyser       = null;
   let audioCtxLive   = null;
@@ -109,6 +118,28 @@ export function initWaveformRenderer() {
       redrawStatic();
     });
     styleChipsEl.appendChild(btn);
+  });
+
+  // ── Build bar-width chips ───────────────────────────────────────────────────
+  BAR_WIDTHS.forEach((bw, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip' + (i === 0 ? ' active' : '');
+    btn.textContent = bw.label;
+    btn.addEventListener('click', () => {
+      setChip(barWidthChipsEl, btn);
+      selectedBar = bw;
+      redrawStatic();
+    });
+    barWidthChipsEl.appendChild(btn);
+  });
+
+  // ── Colour swatches (reuse e-swatch pattern) ────────────────────────────────
+  document.getElementById('panel-waveform').addEventListener('click', e => {
+    const swatch = e.target.closest('.e-swatch');
+    if (!swatch) return;
+    const target = document.getElementById(swatch.closest('.e-swatches').dataset.target);
+    if (target) { target.value = swatch.dataset.color; target.dispatchEvent(new Event('input')); }
   });
 
   // ── Controls → redraw ───────────────────────────────────────────────────────
@@ -262,12 +293,13 @@ export function initWaveformRenderer() {
   function drawStaticWave(c, W, H, peaks) {
     const heightFrac = Number(waveHeight.value) / 100;
     const maxAmp = (H / 2) * heightFrac;
-    c.fillStyle = waveColor();
-    c.strokeStyle = waveColor();
+    const col = waveColor();
+    c.fillStyle   = col;
+    c.strokeStyle = col;
 
     if (selectedStyle === 'line') {
       c.beginPath();
-      c.lineWidth = Math.max(1, W / 300);
+      c.lineWidth = Math.max(1, selectedBar.px);
       for (let i = 0; i < W; i++) {
         const amp = peaks[i] * maxAmp;
         const y   = H / 2 - amp;
@@ -277,12 +309,25 @@ export function initWaveformRenderer() {
       return;
     }
 
-    for (let i = 0; i < W; i++) {
-      const amp = peaks[i] * maxAmp;
+    const bw   = selectedBar.px;
+    const gap  = selectedBar.gap;
+    const step = bw + gap;
+    // Downsample peaks to bar count when bars are wide
+    const barCount = Math.floor(W / step);
+    const buckW    = peaks.length / barCount;
+
+    for (let b = 0; b < barCount; b++) {
+      // Average peaks across this bar's bucket
+      let sum = 0, cnt = 0;
+      const s = Math.floor(b * buckW), e = Math.min(peaks.length, Math.floor((b + 1) * buckW));
+      for (let i = s; i < e; i++) { sum += peaks[i]; cnt++; }
+      const amp = (cnt ? sum / cnt : 0) * maxAmp;
+      const x   = b * step;
+
       if (selectedStyle === 'bars') {
-        c.fillRect(i, H / 2 - amp, 1, amp || 1);
+        c.fillRect(x, H / 2 - amp, bw, amp || 1);
       } else { // mirrored
-        c.fillRect(i, H / 2 - amp, 1, amp * 2 || 1);
+        c.fillRect(x, H / 2 - amp, bw, amp * 2 || 1);
       }
     }
   }
@@ -291,15 +336,15 @@ export function initWaveformRenderer() {
     // data = Uint8Array from analyser.getByteTimeDomainData
     const heightFrac = Number(waveHeight.value) / 100;
     const maxAmp = (H / 2) * heightFrac;
-    c.fillStyle = waveColor();
-    c.strokeStyle = waveColor();
-    const step = data.length / W;
+    const col = waveColor();
+    c.fillStyle   = col;
+    c.strokeStyle = col;
 
     if (selectedStyle === 'line') {
       c.beginPath();
-      c.lineWidth = Math.max(1, W / 300);
+      c.lineWidth = Math.max(1, selectedBar.px);
       for (let i = 0; i < W; i++) {
-        const sample = (data[Math.floor(i * step)] / 128.0) - 1.0;
+        const sample = (data[Math.floor(i * data.length / W)] / 128.0) - 1.0;
         const y = H / 2 - sample * maxAmp;
         i === 0 ? c.moveTo(i, y) : c.lineTo(i, y);
       }
@@ -307,13 +352,23 @@ export function initWaveformRenderer() {
       return;
     }
 
-    for (let i = 0; i < W; i++) {
-      const sample = Math.abs((data[Math.floor(i * step)] / 128.0) - 1.0);
-      const amp = sample * maxAmp;
+    const bw      = selectedBar.px;
+    const gap     = selectedBar.gap;
+    const step    = bw + gap;
+    const barCount = Math.floor(W / step);
+    const buckW    = data.length / barCount;
+
+    for (let b = 0; b < barCount; b++) {
+      let sum = 0, cnt = 0;
+      const s = Math.floor(b * buckW), e = Math.min(data.length, Math.floor((b + 1) * buckW));
+      for (let i = s; i < e; i++) { sum += Math.abs((data[i] / 128.0) - 1.0); cnt++; }
+      const amp = (cnt ? sum / cnt : 0) * maxAmp;
+      const x   = b * step;
+
       if (selectedStyle === 'bars') {
-        c.fillRect(i, H / 2 - amp, 1, amp || 1);
+        c.fillRect(x, H / 2 - amp, bw, amp || 1);
       } else {
-        c.fillRect(i, H / 2 - amp, 1, amp * 2 || 1);
+        c.fillRect(x, H / 2 - amp, bw, amp * 2 || 1);
       }
     }
   }

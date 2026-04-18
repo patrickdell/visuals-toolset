@@ -680,7 +680,24 @@
               <label for="wfr-wave-color">Wave colour</label>
               <input type="color" id="wfr-wave-color" value="#ffffff">
             </div>
-            <div class="wfr-color-row" style="margin-top:8px">
+            <div class="e-swatches" data-target="wfr-wave-color" style="margin-top:8px">
+              <span class="e-swatch-label">Presets:</span>
+              <span class="e-swatch" style="background:#ffffff;border-color:rgba(0,0,0,0.25)" title="White"       data-color="#ffffff"></span>
+              <span class="e-swatch" style="background:#000000"                                title="Black"       data-color="#000000"></span>
+              <span class="e-swatch" style="background:#D50202"                                title="Red"         data-color="#D50202"></span>
+              <span class="e-swatch" style="background:#CA0101"                                                    data-color="#CA0101"></span>
+              <span class="e-swatch" style="background:#AC0000"                                                    data-color="#AC0000"></span>
+              <span class="e-swatch" style="background:#FAE1E1"                                                    data-color="#FAE1E1"></span>
+              <span class="e-swatch" style="background:#268626"                                title="Green"       data-color="#268626"></span>
+              <span class="e-swatch" style="background:#0B560D"                                                    data-color="#0B560D"></span>
+              <span class="e-swatch" style="background:#E5F0E5"                                                    data-color="#E5F0E5"></span>
+              <span class="e-swatch" style="background:#096080"                                title="Blue"        data-color="#096080"></span>
+              <span class="e-swatch" style="background:#E5EFF1"                                                    data-color="#E5EFF1"></span>
+              <span class="e-swatch" style="background:#F8EC88"                                title="Yellow"      data-color="#F8EC88"></span>
+              <span class="e-swatch" style="background:#ff6b35"                                title="Orange"      data-color="#ff6b35"></span>
+              <span class="e-swatch" style="background:#c77dff"                                title="Purple"      data-color="#c77dff"></span>
+            </div>
+            <div class="wfr-color-row" style="margin-top:10px">
               <label for="wfr-wave-opacity" style="min-width:56px">Opacity</label>
               <input type="range" id="wfr-wave-opacity" min="10" max="100" value="90" style="flex:1">
               <span id="wfr-opacity-val" style="min-width:30px;text-align:right;font-size:.8rem">90%</span>
@@ -690,6 +707,11 @@
           <div class="sidebar-section">
             <div class="chips-label">Waveform height</div>
             <input type="range" id="wfr-wave-height" min="10" max="90" value="40" style="width:100%;accent-color:var(--accent)">
+          </div>
+
+          <div class="sidebar-section">
+            <div class="chips-label">Bar width</div>
+            <div class="chip-row" id="wfr-barwidth-chips"></div>
           </div>
 
           <div class="sidebar-section" style="display:flex;flex-direction:column;gap:8px">
