@@ -1238,6 +1238,10 @@ input, select, textarea { font-size: 16px; }
 
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
+.wfr-png-note {
+  font-size: .75rem; color: var(--muted); margin: 2px 0 0; line-height: 1.45;
+}
+
 @media (max-width: 640px) {
   .wfr-layout { flex-direction: column; }
   .wfr-sidebar { flex: none; width: 100%; }

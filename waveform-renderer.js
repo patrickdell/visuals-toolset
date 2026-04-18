@@ -42,6 +42,7 @@ export function initWaveformRenderer() {
   const waveHeight     = document.getElementById('wfr-wave-height');
   const playBtn        = document.getElementById('wfr-play-btn');
   const exportBtn      = document.getElementById('wfr-export-btn');
+  const exportPngBtn   = document.getElementById('wfr-export-png');
   const progressWrap   = document.getElementById('wfr-progress-wrap');
   const progressBar    = document.getElementById('wfr-progress-bar');
   const progressLabel  = document.getElementById('wfr-progress-label');
@@ -166,8 +167,9 @@ export function initWaveformRenderer() {
       console.warn('[wfr] audio decode failed', e);
     }
 
-    playBtn.disabled   = false;
-    exportBtn.disabled = false;
+    playBtn.disabled      = false;
+    exportBtn.disabled    = false;
+    exportPngBtn.disabled = false;
     canvasHint.style.display = 'none';
   }
 
@@ -369,7 +371,8 @@ export function initWaveformRenderer() {
   }
 
   // ── Export ──────────────────────────────────────────────────────────────────
-  exportBtn.addEventListener('click', () => { if (!isExporting) exportVideo(); });
+  exportBtn.addEventListener('click',    () => { if (!isExporting) exportVideo(); });
+  exportPngBtn.addEventListener('click', () => { if (!isExporting) exportPngSequence(); });
 
   async function exportVideo() {
     if (!audioEl) return;
@@ -463,6 +466,127 @@ export function initWaveformRenderer() {
       if (bgVideoEl) bgVideoEl.pause();
       recorder.stop();
     };
+  }
+
+  // ── PNG sequence export ────────────────────────────────────────────────────
+  async function exportPngSequence() {
+    if (!audioBuffer) return;
+    if (typeof JSZip === 'undefined') {
+      alert('JSZip not loaded — check your internet connection and reload.');
+      return;
+    }
+
+    stopPreview();
+    isExporting = true;
+    exportBtn.disabled    = true;
+    exportPngBtn.disabled = true;
+    playBtn.disabled      = true;
+    progressWrap.style.display = '';
+    progressBar.style.width = '0%';
+    progressLabel.textContent = 'Rendering frames…';
+
+    const FPS      = 30;
+    const EW       = selectedSize.w;
+    const EH       = selectedSize.h;
+    const duration = audioBuffer.duration;
+    const total    = Math.ceil(duration * FPS);
+    const sampleRate = audioBuffer.sampleRate;
+    const channelData = audioBuffer.getChannelData(0);
+    const windowSize  = 2048; // samples per frame (~46ms at 44.1kHz)
+
+    const off = document.createElement('canvas');
+    off.width  = EW;
+    off.height = EH;
+    const ec = off.getContext('2d', { alpha: true });
+
+    const zip = new JSZip();
+    const folder = zip.folder('frames');
+
+    // Also export audio as WAV for NLE sync
+    const wavBlob = encodeWav(audioBuffer);
+    zip.file('audio.wav', wavBlob);
+
+    for (let frame = 0; frame < total; frame++) {
+      // Get waveform data at this frame's time position
+      const t           = frame / FPS;
+      const centerSamp  = Math.floor(t * sampleRate);
+      const startSamp   = Math.max(0, centerSamp - windowSize / 2);
+      const frameData   = new Uint8Array(windowSize);
+      for (let i = 0; i < windowSize; i++) {
+        const idx = startSamp + i;
+        frameData[i] = idx < channelData.length
+          ? Math.round(Math.max(-1, Math.min(1, channelData[idx])) * 127 + 128)
+          : 128;
+      }
+
+      // Draw frame
+      ec.clearRect(0, 0, EW, EH);
+      drawBg(ec, EW, EH, true);
+      drawLiveWave(ec, EW, EH, frameData);
+
+      // Collect PNG blob
+      const pngBlob = await new Promise(res => off.toBlob(res, 'image/png'));
+      const pngBuf  = await pngBlob.arrayBuffer();
+      const name    = 'frame_' + String(frame + 1).padStart(6, '0') + '.png';
+      folder.file(name, pngBuf);
+
+      // Update progress every 10 frames
+      if (frame % 10 === 0) {
+        const pct = Math.round((frame / total) * 100);
+        progressBar.style.width = pct + '%';
+        progressLabel.textContent = `Rendering frame ${frame + 1} / ${total}…`;
+        // Yield to keep UI responsive
+        await new Promise(r => setTimeout(r, 0));
+      }
+    }
+
+    progressLabel.textContent = 'Zipping…';
+    progressBar.style.width = '95%';
+    const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 1 } });
+    const zipName = 'waveform_' + selectedSize.label.replace(':', 'x') + '_png_seq.zip';
+    await saveFile(zipBlob, zipName, 'application/zip');
+
+    isExporting = false;
+    exportBtn.disabled    = false;
+    exportPngBtn.disabled = false;
+    playBtn.disabled      = false;
+    progressWrap.style.display = 'none';
+  }
+
+  /** Encode AudioBuffer as a minimal 16-bit PCM WAV blob */
+  function encodeWav(buffer) {
+    const numChannels = buffer.numberOfChannels;
+    const sampleRate  = buffer.sampleRate;
+    const numSamples  = buffer.length;
+    const byteDepth   = 2; // 16-bit
+    const dataLen     = numSamples * numChannels * byteDepth;
+    const ab          = new ArrayBuffer(44 + dataLen);
+    const view        = new DataView(ab);
+
+    function write(off, str) { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); }
+    write(0,  'RIFF');
+    view.setUint32(4,  36 + dataLen, true);
+    write(8,  'WAVE');
+    write(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);                        // PCM
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * byteDepth, true);
+    view.setUint16(32, numChannels * byteDepth, true);
+    view.setUint16(34, 16, true);
+    write(36, 'data');
+    view.setUint32(40, dataLen, true);
+
+    let offset = 44;
+    for (let i = 0; i < numSamples; i++) {
+      for (let c = 0; c < numChannels; c++) {
+        const s = Math.max(-1, Math.min(1, buffer.getChannelData(c)[i]));
+        view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+        offset += 2;
+      }
+    }
+    return new Blob([ab], { type: 'audio/wav' });
   }
 
   function buildExportPeaks(W) {

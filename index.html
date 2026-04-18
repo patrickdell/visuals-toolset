@@ -693,8 +693,10 @@
           </div>
 
           <div class="sidebar-section" style="display:flex;flex-direction:column;gap:8px">
-            <button id="wfr-play-btn"   class="export-btn-secondary" disabled>▶ Preview</button>
-            <button id="wfr-export-btn" class="export-btn"           disabled>Export video</button>
+            <button id="wfr-play-btn"    class="export-btn-secondary" disabled>▶ Preview</button>
+            <button id="wfr-export-btn"  class="export-btn"           disabled>Export WebM video</button>
+            <button id="wfr-export-png"  class="export-btn-secondary" disabled>Export PNG sequence ↓</button>
+            <p class="wfr-png-note">PNG sequence: transparent frames, importable directly in Final Cut Pro, Premiere &amp; After Effects. Audio exported separately.</p>
             <div id="wfr-progress-wrap" class="cmp-progress-wrap" style="display:none">
               <div class="cmp-progress-track">
                 <div id="wfr-progress-bar" class="cmp-progress-bar" style="width:0%"></div>
@@ -718,6 +720,7 @@
     </div>
   </section>
 
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>
