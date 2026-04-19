@@ -40,34 +40,38 @@ const BG_MODES = [
 
 export function initWaveformRenderer() {
   // ── DOM refs ────────────────────────────────────────────────────────────────
-  const sizeChipsEl    = document.getElementById('wfr-size-chips');
-  const audioDrop      = document.getElementById('wfr-audio-drop');
-  const audioInput     = document.getElementById('wfr-audio-input');
-  const audioDropText  = document.getElementById('wfr-audio-drop-text');
-  const bgDrop         = document.getElementById('wfr-bg-drop');
-  const bgInput        = document.getElementById('wfr-bg-input');
-  const bgDropText     = document.getElementById('wfr-bg-drop-text');
-  const bgChipsEl      = document.getElementById('wfr-bg-chips');
-  const bgColorRow     = document.getElementById('wfr-bg-color-row');
-  const bgColorPicker  = document.getElementById('wfr-bg-color');
+  const sizeChipsEl     = document.getElementById('wfr-size-chips');
+  const audioDrop       = document.getElementById('wfr-audio-drop');
+  const audioInput      = document.getElementById('wfr-audio-input');
+  const audioDropText   = document.getElementById('wfr-audio-drop-text');
+  const bgDrop          = document.getElementById('wfr-bg-drop');
+  const bgInput         = document.getElementById('wfr-bg-input');
+  const bgDropText      = document.getElementById('wfr-bg-drop-text');
+  const bgChipsEl       = document.getElementById('wfr-bg-chips');
+  const bgColorRow      = document.getElementById('wfr-bg-color-row');
+  const bgColorPicker   = document.getElementById('wfr-bg-color');
   const styleChipsEl    = document.getElementById('wfr-style-chips');
   const barWidthChipsEl = document.getElementById('wfr-barwidth-chips');
   const decayChipsEl    = document.getElementById('wfr-decay-chips');
-  const waveColorPicker= document.getElementById('wfr-wave-color');
-  const waveOpacity    = document.getElementById('wfr-wave-opacity');
-  const opacityVal     = document.getElementById('wfr-opacity-val');
-  const waveHeight     = document.getElementById('wfr-wave-height');
-  const wavePos        = document.getElementById('wfr-wave-pos');
-  const playBtn        = document.getElementById('wfr-play-btn');
-  const exportMp4Btn   = document.getElementById('wfr-export-mp4');
-  const exportBtn      = document.getElementById('wfr-export-btn');
-  const exportPngBtn   = document.getElementById('wfr-export-png');
-  const progressWrap   = document.getElementById('wfr-progress-wrap');
-  const progressBar    = document.getElementById('wfr-progress-bar');
-  const progressLabel  = document.getElementById('wfr-progress-label');
-  const canvas         = document.getElementById('wfr-canvas');
-  const canvasHint     = document.getElementById('wfr-canvas-hint');
-  const ctx            = canvas.getContext('2d');
+  const waveColorPicker = document.getElementById('wfr-wave-color');
+  const waveOpacity     = document.getElementById('wfr-wave-opacity');
+  const opacityVal      = document.getElementById('wfr-opacity-val');
+  const waveHeight      = document.getElementById('wfr-wave-height');
+  const waveHeightVal   = document.getElementById('wfr-height-val');
+  const wavePos         = document.getElementById('wfr-wave-pos');
+  const wavePosVal      = document.getElementById('wfr-pos-val');
+  const advancedToggle  = document.getElementById('wfr-advanced-toggle');
+  const advancedPanel   = document.getElementById('wfr-advanced');
+  const onboarding      = document.getElementById('wfr-onboarding');
+  const playBtn         = document.getElementById('wfr-play-btn');
+  const exportMp4Btn    = document.getElementById('wfr-export-mp4');
+  const exportBtn       = document.getElementById('wfr-export-btn');
+  const exportPngBtn    = document.getElementById('wfr-export-png');
+  const progressWrap    = document.getElementById('wfr-progress-wrap');
+  const progressBar     = document.getElementById('wfr-progress-bar');
+  const progressLabel   = document.getElementById('wfr-progress-label');
+  const canvas          = document.getElementById('wfr-canvas');
+  const ctx             = canvas.getContext('2d');
 
   // ── State ───────────────────────────────────────────────────────────────────
   let audioBuffer    = null;   // decoded AudioBuffer (for static preview)
@@ -181,8 +185,21 @@ export function initWaveformRenderer() {
     opacityVal.textContent = waveOpacity.value + '%';
     redrawStatic();
   });
-  waveHeight.addEventListener('input', redrawStatic);
-  wavePos.addEventListener('input', redrawStatic);
+  waveHeight.addEventListener('input', () => {
+    waveHeightVal.textContent = waveHeight.value + '%';
+    redrawStatic();
+  });
+  wavePos.addEventListener('input', () => {
+    wavePosVal.textContent = wavePos.value + '%';
+    redrawStatic();
+  });
+
+  // ── Advanced toggle ─────────────────────────────────────────────────────────
+  advancedToggle.addEventListener('click', () => {
+    const open = advancedPanel.style.display !== 'none';
+    advancedPanel.style.display = open ? 'none' : '';
+    advancedToggle.textContent  = (open ? '▸' : '▾') + ' Advanced';
+  });
 
   // ── Initial canvas size ─────────────────────────────────────────────────────
   resizePreviewCanvas();
@@ -235,7 +252,7 @@ export function initWaveformRenderer() {
     exportMp4Btn.disabled = false;
     exportBtn.disabled    = false;
     exportPngBtn.disabled = false;
-    canvasHint.style.display = 'none';
+    if (onboarding) onboarding.style.display = 'none';
   }
 
   function buildStaticPeaks() {

@@ -1209,22 +1209,34 @@ input, select, textarea { font-size: 16px; }
 
 /* ── Waveform Renderer ─────────────────────────────────────────────────────── */
 .wfr-layout {
-  display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap;
+  display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;
 }
 .wfr-sidebar {
-  flex: 0 0 220px; display: flex; flex-direction: column; gap: 0;
+  flex: 0 0 250px; display: flex; flex-direction: column; gap: 12px;
 }
 .wfr-preview-wrap {
-  flex: 1; min-width: 260px;
-  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  flex: 1; min-width: 240px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.wfr-canvas-wrap {
+  position: relative; display: inline-block; line-height: 0;
+  border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0,0,0,.5);
+  max-width: 100%;
 }
 .wfr-canvas {
   max-width: 100%; border-radius: var(--radius);
   background: #111; display: block;
-  box-shadow: 0 4px 24px rgba(0,0,0,.5);
 }
-.wfr-canvas-hint { font-size: .82rem; color: var(--muted); text-align: center; margin: 0; }
 
+/* Card sections */
+.wfr-card { padding: 14px 16px; display: flex; flex-direction: column; }
+.wfr-card-title {
+  font-size: .7rem; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--muted); margin: 0 0 12px;
+}
+
+/* Drop zones */
 .wfr-mini-drop {
   border: 1px dashed var(--line); border-radius: var(--radius-sm);
   padding: 10px 12px; cursor: pointer; font-size: .82rem; color: var(--muted);
@@ -1233,30 +1245,90 @@ input, select, textarea { font-size: 16px; }
 .wfr-mini-drop:hover, .wfr-mini-drop.drag-over { border-color: var(--accent); color: var(--ink); }
 .wfr-mini-drop.has-file { border-color: var(--accent); color: var(--accent); }
 
-.wfr-optional { font-size: .72rem; color: var(--muted); font-weight: 400; }
-
-.wfr-color-row {
-  display: flex; align-items: center; gap: 8px;
-  font-size: .82rem; color: var(--muted);
+/* Background controls row: chips + inline colour picker */
+.wfr-bg-controls {
+  display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap;
 }
-.wfr-color-row label { min-width: 72px; }
-.wfr-color-row input[type="color"] {
-  width: 32px; height: 26px; border: 1px solid var(--line); border-radius: 4px;
+.wfr-inline-color input[type="color"] {
+  width: 28px; height: 24px; border: 1px solid var(--line); border-radius: 4px;
   cursor: pointer; padding: 2px; background: none; flex-shrink: 0;
 }
-.wfr-color-row input[type="range"] { accent-color: var(--accent); flex: 1; }
 
-.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-
-.wfr-png-note {
-  font-size: .75rem; color: var(--muted); margin: 2px 0 0; line-height: 1.45;
+/* Compact wave colour row: picker inline with swatches */
+.wfr-color-compact {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
 }
+.wfr-color-compact > input[type="color"] {
+  width: 28px; height: 24px; border: 1px solid var(--line); border-radius: 4px;
+  cursor: pointer; padding: 2px; background: none; flex-shrink: 0;
+}
+.wfr-color-compact .e-swatches { margin-top: 0; }
+
+/* Slider rows: label + range + value on one line */
+.wfr-slider-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .8rem; color: var(--muted); margin-top: 8px;
+}
+.wfr-slider-row > span:first-child { min-width: 52px; }
+.wfr-slider-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+.wfr-slider-row > span:last-child {
+  min-width: 34px; text-align: right;
+  font-variant-numeric: tabular-nums; font-size: .78rem;
+}
+
+/* Advanced toggle */
+.wfr-advanced-toggle {
+  background: none; border: none; color: var(--muted); font-size: .8rem;
+  cursor: pointer; padding: 10px 0 0; text-align: left;
+  display: flex; align-items: center; gap: 5px; transition: color .15s;
+}
+.wfr-advanced-toggle:hover { color: var(--ink); }
+
+/* Misc */
+.wfr-optional { font-size: .72rem; color: var(--muted); font-weight: 400; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 .wfr-pos-labels {
   display: flex; justify-content: space-between;
   font-size: .72rem; color: var(--muted); margin-top: 2px;
 }
 
-@media (max-width: 640px) {
+/* Onboarding overlay */
+.wfr-onboarding {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; justify-content: center;
+  align-items: flex-start; gap: 14px;
+  background: rgba(0,0,0,.65); padding: 28px;
+  border-radius: var(--radius);
+}
+.wfr-onboard-step {
+  display: flex; align-items: center; gap: 12px;
+  color: rgba(255,255,255,.5); font-size: .85rem; line-height: 1.3;
+}
+.wfr-step-primary { color: var(--ink); font-weight: 600; }
+.wfr-step-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  background: rgba(255,255,255,.1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 700; color: var(--muted); flex-shrink: 0;
+}
+.wfr-step-primary .wfr-step-num { background: var(--accent); color: #fff; }
+
+/* Export bar */
+.wfr-export-bar {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-top: 16px; padding: 12px 16px;
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.wfr-export-play { flex-shrink: 0; }
+.wfr-export-actions { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+.wfr-export-bar .cmp-progress-wrap { flex: 1 1 100%; margin: 4px 0 0; }
+
+.wfr-png-note {
+  font-size: .75rem; color: var(--muted); margin: 2px 0 0; line-height: 1.45;
+}
+
+@media (max-width: 680px) {
   .wfr-layout { flex-direction: column; }
   .wfr-sidebar { flex: none; width: 100%; }
+  .wfr-preview-wrap { width: 100%; }
 }

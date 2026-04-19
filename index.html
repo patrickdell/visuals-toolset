@@ -644,118 +644,104 @@
         <!-- Left: controls -->
         <div class="wfr-sidebar">
 
-          <div class="sidebar-section">
-            <div class="chips-label">Output size</div>
-            <div class="chip-row" id="wfr-size-chips"></div>
-          </div>
+          <!-- ── Canvas card ── -->
+          <div class="card wfr-card">
+            <p class="wfr-card-title">Canvas</p>
 
-          <div class="sidebar-section">
-            <div class="chips-label">Audio source</div>
+            <p class="chips-label">Size</p>
+            <div class="chip-row" id="wfr-size-chips"></div>
+
+            <p class="chips-label" style="margin-top:14px">Audio</p>
             <div id="wfr-audio-drop" class="wfr-mini-drop">
               <span id="wfr-audio-drop-text">Drop audio or video file</span>
               <input id="wfr-audio-input" type="file" accept="audio/*,video/*" hidden>
             </div>
-          </div>
 
-          <div class="sidebar-section">
-            <div class="chips-label">Background <span class="wfr-optional">(optional)</span></div>
+            <p class="chips-label" style="margin-top:14px">Background <span class="wfr-optional">(optional)</span></p>
             <div id="wfr-bg-drop" class="wfr-mini-drop">
               <span id="wfr-bg-drop-text">Drop photo or video</span>
               <input id="wfr-bg-input" type="file" accept="image/*,video/*" hidden>
             </div>
-            <div class="chip-row" id="wfr-bg-chips" style="margin-top:8px"></div>
-            <div class="wfr-color-row" style="margin-top:8px" id="wfr-bg-color-row">
-              <label for="wfr-bg-color">BG colour</label>
-              <input type="color" id="wfr-bg-color" value="#111111">
+            <div class="wfr-bg-controls">
+              <div class="chip-row" id="wfr-bg-chips"></div>
+              <div id="wfr-bg-color-row" class="wfr-inline-color">
+                <input type="color" id="wfr-bg-color" value="#111111">
+              </div>
             </div>
-            <div class="e-swatches" data-target="wfr-bg-color" style="margin-top:8px" id="wfr-bg-swatches">
+            <div class="e-swatches" data-target="wfr-bg-color" id="wfr-bg-swatches" style="margin-top:8px">
               <span class="e-swatch-label" title="Colour presets">🎨</span>
-              <span class="e-swatch" style="background:#000000"                                title="Black"       data-color="#000000"></span>
-              <span class="e-swatch" style="background:#111111"                                title="Near black"  data-color="#111111"></span>
-              <span class="e-swatch" style="background:#ffffff;border-color:rgba(0,0,0,0.25)" title="White"       data-color="#ffffff"></span>
-              <span class="e-swatch" style="background:#D50202"                                title="Red"         data-color="#D50202"></span>
-              <span class="e-swatch" style="background:#AC0000"                                                    data-color="#AC0000"></span>
-              <span class="e-swatch" style="background:#FAE1E1"                                                    data-color="#FAE1E1"></span>
-              <span class="e-swatch" style="background:#268626"                                title="Green"       data-color="#268626"></span>
-              <span class="e-swatch" style="background:#0B560D"                                                    data-color="#0B560D"></span>
-              <span class="e-swatch" style="background:#E5F0E5"                                                    data-color="#E5F0E5"></span>
-              <span class="e-swatch" style="background:#096080"                                title="Blue"        data-color="#096080"></span>
-              <span class="e-swatch" style="background:#E5EFF1"                                                    data-color="#E5EFF1"></span>
-              <span class="e-swatch" style="background:#F8EC88"                                title="Yellow"      data-color="#F8EC88"></span>
-              <span class="e-swatch" style="background:#ff6b35"                                title="Orange"      data-color="#ff6b35"></span>
-              <span class="e-swatch" style="background:#c77dff"                                title="Purple"      data-color="#c77dff"></span>
+              <span class="e-swatch" style="background:#000000"                                title="Black"      data-color="#000000"></span>
+              <span class="e-swatch" style="background:#111111"                                title="Near black" data-color="#111111"></span>
+              <span class="e-swatch" style="background:#ffffff;border-color:rgba(0,0,0,0.25)" title="White"      data-color="#ffffff"></span>
+              <span class="e-swatch" style="background:#D50202"                                title="Red"        data-color="#D50202"></span>
+              <span class="e-swatch" style="background:#AC0000"                                                   data-color="#AC0000"></span>
+              <span class="e-swatch" style="background:#FAE1E1"                                                   data-color="#FAE1E1"></span>
+              <span class="e-swatch" style="background:#268626"                                title="Green"      data-color="#268626"></span>
+              <span class="e-swatch" style="background:#0B560D"                                                   data-color="#0B560D"></span>
+              <span class="e-swatch" style="background:#E5F0E5"                                                   data-color="#E5F0E5"></span>
+              <span class="e-swatch" style="background:#096080"                                title="Blue"       data-color="#096080"></span>
+              <span class="e-swatch" style="background:#E5EFF1"                                                   data-color="#E5EFF1"></span>
+              <span class="e-swatch" style="background:#F8EC88"                                title="Yellow"     data-color="#F8EC88"></span>
+              <span class="e-swatch" style="background:#ff6b35"                                title="Orange"     data-color="#ff6b35"></span>
+              <span class="e-swatch" style="background:#c77dff"                                title="Purple"     data-color="#c77dff"></span>
             </div>
           </div>
 
-          <div class="sidebar-section">
-            <div class="chips-label">Style</div>
+          <!-- ── Waveform card ── -->
+          <div class="card wfr-card">
+            <p class="wfr-card-title">Waveform</p>
+
+            <p class="chips-label">Style</p>
             <div class="chip-row" id="wfr-style-chips"></div>
-          </div>
 
-          <div class="sidebar-section">
-            <div class="wfr-color-row">
-              <label for="wfr-wave-color">Wave colour</label>
+            <p class="chips-label" style="margin-top:14px">Colour</p>
+            <div class="wfr-color-compact">
               <input type="color" id="wfr-wave-color" value="#ffffff">
-            </div>
-            <div class="e-swatches" data-target="wfr-wave-color" style="margin-top:8px">
-              <span class="e-swatch-label" title="Colour presets">🎨</span>
-              <span class="e-swatch" style="background:#ffffff;border-color:rgba(0,0,0,0.25)" title="White"       data-color="#ffffff"></span>
-              <span class="e-swatch" style="background:#000000"                                title="Black"       data-color="#000000"></span>
-              <span class="e-swatch" style="background:#D50202"                                title="Red"         data-color="#D50202"></span>
-              <span class="e-swatch" style="background:#CA0101"                                                    data-color="#CA0101"></span>
-              <span class="e-swatch" style="background:#AC0000"                                                    data-color="#AC0000"></span>
-              <span class="e-swatch" style="background:#FAE1E1"                                                    data-color="#FAE1E1"></span>
-              <span class="e-swatch" style="background:#268626"                                title="Green"       data-color="#268626"></span>
-              <span class="e-swatch" style="background:#0B560D"                                                    data-color="#0B560D"></span>
-              <span class="e-swatch" style="background:#E5F0E5"                                                    data-color="#E5F0E5"></span>
-              <span class="e-swatch" style="background:#096080"                                title="Blue"        data-color="#096080"></span>
-              <span class="e-swatch" style="background:#E5EFF1"                                                    data-color="#E5EFF1"></span>
-              <span class="e-swatch" style="background:#F8EC88"                                title="Yellow"      data-color="#F8EC88"></span>
-              <span class="e-swatch" style="background:#ff6b35"                                title="Orange"      data-color="#ff6b35"></span>
-              <span class="e-swatch" style="background:#c77dff"                                title="Purple"      data-color="#c77dff"></span>
-            </div>
-            <div class="wfr-color-row" style="margin-top:10px">
-              <label for="wfr-wave-opacity" style="min-width:56px">Opacity</label>
-              <input type="range" id="wfr-wave-opacity" min="10" max="100" value="90" style="flex:1">
-              <span id="wfr-opacity-val" style="min-width:30px;text-align:right;font-size:.8rem">90%</span>
-            </div>
-          </div>
-
-          <div class="sidebar-section">
-            <div class="chips-label">Waveform height</div>
-            <input type="range" id="wfr-wave-height" min="10" max="90" value="40" style="width:100%;accent-color:var(--accent)">
-          </div>
-
-          <div class="sidebar-section">
-            <div class="chips-label">Vertical position</div>
-            <input type="range" id="wfr-wave-pos" min="0" max="100" value="50" style="width:100%;accent-color:var(--accent)">
-            <div class="wfr-pos-labels"><span>Top</span><span>Centre</span><span>Bottom</span></div>
-          </div>
-
-          <div class="sidebar-section">
-            <div class="chips-label">Bar width</div>
-            <div class="chip-row" id="wfr-barwidth-chips"></div>
-          </div>
-
-          <div class="sidebar-section">
-            <div class="chips-label">Bar decay</div>
-            <div class="chip-row" id="wfr-decay-chips"></div>
-            <p class="wfr-png-note" style="margin-top:6px">Bars rise instantly but fall at the selected rate — like a VU meter.</p>
-          </div>
-
-          <div class="sidebar-section" style="display:flex;flex-direction:column;gap:8px">
-            <button id="wfr-play-btn"    class="export-btn-secondary" disabled>▶ Preview</button>
-            <button id="wfr-export-mp4"  class="export-btn"           disabled>Export MP4 (H.264)</button>
-            <button id="wfr-export-btn"  class="export-btn-secondary" disabled>Export WebM (VP9)</button>
-            <button id="wfr-export-png"  class="export-btn-secondary" disabled>Export PNG sequence ↓</button>
-            <p class="wfr-png-note">PNG sequence: transparent frames, importable directly in Final Cut Pro, Premiere &amp; After Effects. Audio exported separately.</p>
-            <div id="wfr-progress-wrap" class="cmp-progress-wrap" style="display:none">
-              <div class="cmp-progress-track">
-                <div id="wfr-progress-bar" class="cmp-progress-bar" style="width:0%"></div>
+              <div class="e-swatches" data-target="wfr-wave-color">
+                <span class="e-swatch-label" title="Colour presets">🎨</span>
+                <span class="e-swatch" style="background:#ffffff;border-color:rgba(0,0,0,0.25)" title="White"  data-color="#ffffff"></span>
+                <span class="e-swatch" style="background:#000000"                                title="Black"  data-color="#000000"></span>
+                <span class="e-swatch" style="background:#D50202"                                title="Red"    data-color="#D50202"></span>
+                <span class="e-swatch" style="background:#CA0101"                                               data-color="#CA0101"></span>
+                <span class="e-swatch" style="background:#AC0000"                                               data-color="#AC0000"></span>
+                <span class="e-swatch" style="background:#FAE1E1"                                               data-color="#FAE1E1"></span>
+                <span class="e-swatch" style="background:#268626"                                title="Green"  data-color="#268626"></span>
+                <span class="e-swatch" style="background:#0B560D"                                               data-color="#0B560D"></span>
+                <span class="e-swatch" style="background:#E5F0E5"                                               data-color="#E5F0E5"></span>
+                <span class="e-swatch" style="background:#096080"                                title="Blue"   data-color="#096080"></span>
+                <span class="e-swatch" style="background:#E5EFF1"                                               data-color="#E5EFF1"></span>
+                <span class="e-swatch" style="background:#F8EC88"                                title="Yellow" data-color="#F8EC88"></span>
+                <span class="e-swatch" style="background:#ff6b35"                                title="Orange" data-color="#ff6b35"></span>
+                <span class="e-swatch" style="background:#c77dff"                                title="Purple" data-color="#c77dff"></span>
               </div>
-              <div class="cmp-progress-meta">
-                <span id="wfr-progress-label">Recording…</span>
+            </div>
+
+            <div class="wfr-slider-row" style="margin-top:12px">
+              <span>Opacity</span>
+              <input type="range" id="wfr-wave-opacity" min="10" max="100" value="90">
+              <span id="wfr-opacity-val">90%</span>
+            </div>
+            <div class="wfr-slider-row">
+              <span>Height</span>
+              <input type="range" id="wfr-wave-height" min="10" max="90" value="40">
+              <span id="wfr-height-val">40%</span>
+            </div>
+
+            <!-- Advanced toggle -->
+            <button class="wfr-advanced-toggle" id="wfr-advanced-toggle">▸ Advanced</button>
+            <div id="wfr-advanced" style="display:none">
+              <div class="wfr-slider-row" style="margin-top:4px">
+                <span>Position</span>
+                <input type="range" id="wfr-wave-pos" min="0" max="100" value="50">
+                <span id="wfr-pos-val">50%</span>
               </div>
+              <div class="wfr-pos-labels" style="margin-bottom:12px"><span>Top</span><span>Centre</span><span>Bottom</span></div>
+
+              <p class="chips-label">Bar width</p>
+              <div class="chip-row" id="wfr-barwidth-chips"></div>
+
+              <p class="chips-label" style="margin-top:12px">Bar decay</p>
+              <div class="chip-row" id="wfr-decay-chips"></div>
             </div>
           </div>
 
@@ -763,11 +749,37 @@
 
         <!-- Right: preview canvas -->
         <div class="wfr-preview-wrap">
-          <canvas id="wfr-canvas" class="wfr-canvas" width="270" height="480"></canvas>
-          <p class="wfr-canvas-hint" id="wfr-canvas-hint">Drop an audio file to begin</p>
+          <div class="wfr-canvas-wrap">
+            <canvas id="wfr-canvas" class="wfr-canvas"></canvas>
+            <div class="wfr-onboarding" id="wfr-onboarding">
+              <div class="wfr-onboard-step"><span class="wfr-step-num">1</span>Pick a canvas size</div>
+              <div class="wfr-onboard-step wfr-step-primary"><span class="wfr-step-num">2</span>Drop an audio file</div>
+              <div class="wfr-onboard-step"><span class="wfr-step-num">3</span>Add a background <em>(optional)</em></div>
+              <div class="wfr-onboard-step"><span class="wfr-step-num">4</span>Style &amp; export</div>
+            </div>
+          </div>
         </div>
 
       </div>
+
+      <!-- ── Export bar ── -->
+      <div class="wfr-export-bar">
+        <button id="wfr-play-btn" class="export-btn-secondary wfr-export-play" disabled>▶ Preview</button>
+        <div class="wfr-export-actions">
+          <button id="wfr-export-mp4" class="export-btn"           disabled>Export MP4</button>
+          <button id="wfr-export-btn" class="export-btn-secondary" disabled>WebM</button>
+          <button id="wfr-export-png" class="export-btn-secondary" disabled>PNG seq</button>
+        </div>
+        <div id="wfr-progress-wrap" class="cmp-progress-wrap" style="display:none;flex:1 1 100%">
+          <div class="cmp-progress-track">
+            <div id="wfr-progress-bar" class="cmp-progress-bar" style="width:0%"></div>
+          </div>
+          <div class="cmp-progress-meta">
+            <span id="wfr-progress-label">Recording…</span>
+          </div>
+        </div>
+      </div>
+
       <div class="tab-permalink"><a class="tab-permalink-link" href="#waveform" data-permalink="waveform">🔗 Link to this tool</a></div>
     </div>
   </section>
