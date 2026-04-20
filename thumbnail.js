@@ -25,6 +25,8 @@ export function initThumbnail() {
   const ratioChipsEl = document.getElementById('thumb-ratio-chips');
   const canvas       = document.getElementById('thumb-canvas');
   const exportBtn    = document.getElementById('thumb-export-btn');
+  const scaleSlider  = document.getElementById('thumb-scale-slider');
+  const scaleVal     = document.getElementById('thumb-scale-val');
   const progressWrap = document.getElementById('thumb-progress-wrap');
   const progressBar  = document.getElementById('thumb-progress-bar');
   const progressLabel= document.getElementById('thumb-progress-label');
@@ -33,6 +35,7 @@ export function initThumbnail() {
   const ctx = canvas.getContext('2d');
 
   let ratio      = PRESETS[0];
+  let cropScale  = 1.0;          // 0.1 – 1.0
   let cropX = 0, cropY = 0, cropW = 0, cropH = 0;
   let fileName   = 'thumbnail';
   let videoReady = false;
@@ -47,6 +50,8 @@ export function initThumbnail() {
     videoReady = false;
     if (!isVideo) return;
     fileName = file.name.replace(/\.[^.]+$/, '');
+    cropScale = 1.0;
+    if (scaleSlider) { scaleSlider.value = '100'; scaleVal.textContent = '100%'; }
     // videoWidth/Height are already set (event fires inside loadedmetadata)
     canvas.width  = videoEl.videoWidth;
     canvas.height = videoEl.videoHeight;
@@ -76,13 +81,36 @@ export function initThumbnail() {
     ratioChipsEl.appendChild(btn);
   });
 
+  // ── Scale slider ──────────────────────────────────────────────────────────
+  scaleSlider?.addEventListener('input', () => {
+    cropScale = Number(scaleSlider.value) / 100;
+    scaleVal.textContent = scaleSlider.value + '%';
+    if (!videoReady) return;
+    // Shrink/grow around the current crop centre
+    const cx = cropX + cropW / 2;
+    const cy = cropY + cropH / 2;
+    const fw = videoEl.videoWidth, fh = videoEl.videoHeight;
+    const ar = ratio.w / ratio.h;
+    let maxW, maxH;
+    if (fw / fh > ar) { maxH = fh; maxW = maxH * ar; }
+    else               { maxW = fw; maxH = maxW / ar; }
+    cropW = maxW * cropScale;
+    cropH = maxH * cropScale;
+    cropX = Math.max(0, Math.min(fw - cropW, cx - cropW / 2));
+    cropY = Math.max(0, Math.min(fh - cropH, cy - cropH / 2));
+    drawPreview();
+  });
+
   // ── Fit crop box to chosen ratio, centred in frame ─────────────────────────
   function fitCrop() {
     const fw = videoEl.videoWidth, fh = videoEl.videoHeight;
     if (!fw || !fh) return;
     const ar = ratio.w / ratio.h;
-    if (fw / fh > ar) { cropH = fh; cropW = cropH * ar; }
-    else               { cropW = fw; cropH = cropW / ar; }
+    let maxW, maxH;
+    if (fw / fh > ar) { maxH = fh; maxW = maxH * ar; }
+    else               { maxW = fw; maxH = maxW / ar; }
+    cropW = maxW * cropScale;
+    cropH = maxH * cropScale;
     cropX = (fw - cropW) / 2;
     cropY = (fh - cropH) / 2;
   }
