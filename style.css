@@ -1542,6 +1542,17 @@ mark.tr-match-current {
   padding-top: 20px;
   border-top: 1px solid var(--line);
 }
+.thumb-heading {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0 0 14px;
+}
+.thumb-optional {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--muted);
+}
 .thumb-canvas {
   display: block;
   width: 100%;
