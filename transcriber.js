@@ -4,8 +4,8 @@
 import { setupDropzone, saveFile } from './utils.js';
 
 const MODELS = [
-  { label: 'Tiny',   id: 'tiny',  note: '~39 MB · fast' },
-  { label: 'Base',   id: 'base',  note: '~74 MB · more accurate' },
+  { label: 'Tiny', id: 'tiny', hint: '39 MB — downloads once, then cached. Fast transcription, works well for clear speech.' },
+  { label: 'Base', id: 'base', hint: '74 MB — downloads once, then cached. More accurate, handles accents and background noise better.' },
 ];
 
 export function initTranscriber() {
@@ -29,18 +29,23 @@ export function initTranscriber() {
   let worker       = null;
 
   // ── Model chips ────────────────────────────────────────────────────────────
+  const modelHint = document.getElementById('tr-model-hint');
+
+  function selectModel(m, btn) {
+    modelChipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    selectedModel = m.id;
+    if (modelHint) modelHint.textContent = m.hint;
+  }
+
   MODELS.forEach((m, i) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'chip' + (i === 0 ? ' active' : '');
     btn.textContent = m.label;
-    btn.title = m.note;
-    btn.addEventListener('click', () => {
-      modelChipsEl.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
-      btn.classList.add('active');
-      selectedModel = m.id;
-    });
+    btn.addEventListener('click', () => selectModel(m, btn));
     modelChipsEl.appendChild(btn);
+    if (i === 0) { selectedModel = m.id; if (modelHint) modelHint.textContent = m.hint; }
   });
 
   // ── File drop / pick ───────────────────────────────────────────────────────

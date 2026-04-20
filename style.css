@@ -1413,6 +1413,13 @@ input, select, textarea { font-size: 16px; }
 }
 
 /* ── Transcribe panel ────────────────────────────────────────────────── */
+.tr-model-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+  min-height: 1.5em; /* stops layout shift when text appears */
+}
 .tr-segments {
   display: flex;
   flex-direction: column;
