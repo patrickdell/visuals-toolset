@@ -14,6 +14,8 @@ const MIME_CANDIDATES = [
   'video/mp4;codecs=avc1.42E01E',
   'video/mp4;codecs=avc1',
   'video/mp4',
+  'video/webm;codecs=vp9,opus',
+  'video/webm;codecs=vp8,opus',
   'video/webm;codecs=vp9',
   'video/webm;codecs=vp8',
   'video/webm',
@@ -243,13 +245,20 @@ export function initThumbnail() {
     const mime = MIME_CANDIDATES.find(m => MediaRecorder.isTypeSupported(m)) || 'video/webm';
     const ext  = mime.startsWith('video/mp4') ? 'mp4' : 'webm';
 
-    const stream   = offCanvas.captureStream(30);
+    // Combine cropped-canvas video with the source video's audio tracks (if any)
+    const canvasStream = offCanvas.captureStream(30);
+    const srcStream    = typeof videoEl.captureStream === 'function' ? videoEl.captureStream() : null;
+    const audioTracks  = srcStream ? srcStream.getAudioTracks() : [];
+    const stream = audioTracks.length
+      ? new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks])
+      : canvasStream;
+
     const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6_000_000 });
     const chunks   = [];
     recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
 
     const wasMuted = videoEl.muted;
-    videoEl.muted = true;
+    videoEl.muted = true;  // silence speakers during recording; captureStream audio is unaffected
     videoEl.currentTime = inPt;
     await new Promise(r => videoEl.addEventListener('seeked', r, { once: true }));
 
