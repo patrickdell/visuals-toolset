@@ -159,6 +159,7 @@ export function initTrimmer() {
       trimBtn.disabled = false;
       playClipBtn.textContent = '▶ Preview clip';
       progressWrap.style.display = 'none';
+      document.dispatchEvent(new CustomEvent('trm:loaded', { detail: { file, isVideo: !isAudioOnly } }));
     }, { once: true });
 
     // Warm up FFmpeg in background

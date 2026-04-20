@@ -15,6 +15,7 @@ import { initLabeller }           from './labeller.js';
 import { initWaveformRenderer }   from './waveform-renderer.js';
 import { initTranscriber }        from './transcriber.js';
 import { initOcr }                from './ocr.js';
+import { initThumbnail }          from './thumbnail.js';
 
 // ── Build preset chips ────────────────────────────────────────────────────
 
@@ -98,6 +99,7 @@ initLabeller();
 initWaveformRenderer();
 initTranscriber();
 initOcr();
+initThumbnail();
 initCompressor();
 initTrimmer();
 initExtractor();

@@ -1536,6 +1536,40 @@ mark.tr-match-current {
 }
 .tr-text { color: var(--ink); }
 
+/* ── Thumbnail (inside Trimmer panel) ───────────────────────────────── */
+.thumb-section {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.thumb-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+.thumb-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.thumb-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  cursor: default;
+  touch-action: none;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+}
+.thumb-drag-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+
 /* ── OCR panel ───────────────────────────────────────────────────────── */
 .ocr-lang-hint {
   font-size: 12px;

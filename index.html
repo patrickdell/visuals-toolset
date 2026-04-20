@@ -452,6 +452,28 @@
           </div>
         </div>
 
+        <!-- ── Thumbnail ─────────────────────────────────────────────── -->
+        <div id="thumb-section" class="thumb-section" style="display:none">
+          <div class="thumb-section-header">
+            <span class="thumb-section-title">Thumbnail</span>
+            <button id="thumb-capture-btn" class="export-btn-secondary">📸 Capture frame</button>
+          </div>
+
+          <div id="thumb-editor" style="display:none">
+            <div class="chips-label">Crop to ratio</div>
+            <div class="chips-row" id="thumb-ratio-chips"></div>
+
+            <canvas id="thumb-canvas" class="thumb-canvas"></canvas>
+            <p class="thumb-drag-hint">Drag the highlighted area to reposition the crop</p>
+
+            <div class="export-bar">
+              <button class="chip" id="thumb-export-jpeg">Save JPEG</button>
+              <button class="chip" id="thumb-export-png">Save PNG</button>
+              <button class="chip" id="thumb-export-webp">Save WebP</button>
+            </div>
+          </div>
+        </div>
+
       </div>
       <div class="tab-permalink"><a class="tab-permalink-link" href="#trim" data-permalink="trim">🔗 Link to this tool</a></div>
     </div>
