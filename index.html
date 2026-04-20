@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Visuals Toolset</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="style.css" />
   <style>
     /* Extra layout bits that reference element IDs */
@@ -458,15 +459,8 @@
           <div class="chips-label">Crop ratio for export</div>
           <div class="chips-row" id="thumb-ratio-chips"></div>
 
-          <div class="thumb-scale-row">
-            <label class="thumb-scale-label" for="thumb-scale-slider">Size</label>
-            <input type="range" id="thumb-scale-slider" class="thumb-scale-slider"
-                   min="10" max="100" value="100" step="1">
-            <span id="thumb-scale-val" class="thumb-scale-val">100%</span>
-          </div>
-
           <canvas id="thumb-canvas" class="thumb-canvas"></canvas>
-          <p class="thumb-drag-hint">Drag to reposition · updates as you scrub</p>
+          <p class="thumb-drag-hint">Drag to reposition · drag corners to resize</p>
 
           <div class="cmp-action-row">
             <button id="thumb-export-btn" class="export-btn">Export thumbnail clip</button>

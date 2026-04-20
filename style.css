@@ -1568,29 +1568,7 @@ mark.tr-match-current {
   color: var(--muted);
   margin: 6px 0 12px;
 }
-.thumb-scale-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 8px 0 0;
-}
-.thumb-scale-label {
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
-  min-width: 28px;
-}
-.thumb-scale-slider {
-  flex: 1;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-.thumb-scale-val {
-  font-size: 12px;
-  color: var(--muted);
-  min-width: 36px;
-  text-align: right;
-}
+
 
 /* ── OCR panel ───────────────────────────────────────────────────────── */
 .ocr-lang-hint {
