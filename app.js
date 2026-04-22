@@ -9,7 +9,6 @@ import { initEmbed }               from './embed.js';
 import { initCompressor }          from './compressor.js';
 import { initTrimmer }             from './trimmer.js';
 import { initExtractor }           from './extractor.js';
-import { initResizer }             from './resizer.js';
 import { initPalette }             from './palette.js';
 import { initLabeller }           from './labeller.js';
 import { initWaveformRenderer }   from './waveform-renderer.js';
@@ -49,7 +48,6 @@ const panels  = {
   compress: 'panel-compress',
   trim:     'panel-trim',
   extract:  'panel-extract',
-  resize:   'panel-resize',
   palette:  'panel-palette',
   label:    'panel-label',
   waveform:   'panel-waveform',
@@ -103,7 +101,6 @@ initThumbnail();
 initCompressor();
 initTrimmer();
 initExtractor();
-initResizer();
 initPalette();
 const calculator = initCalculator({ onRatioChange: () => {} });
 const cropper    = initCropper({ onCropChange: () => exporter.setEnabled(cropper.isLoaded()) });

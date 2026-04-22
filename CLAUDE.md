@@ -71,7 +71,6 @@ compressor.js           H.264 video compression via FFmpeg.wasm; batch queue
 trimmer.js              Video/audio trimmer with In/Out point selection
 thumbnail.js            Crop & export a short video clip from within the Trimmer panel
 extractor.js            Extract audio from video (MP3, AAC, WAV) via FFmpeg.wasm
-resizer.js              Batch image resize / optimize (canvas, no FFmpeg)
 palette.js              Dominant colour palette extractor (median-cut, canvas pixels)
 labeller.js             Overlay a disclosure label on a photo; drag, resize, export
 waveform-renderer.js    Animated waveform over image/video, export as WebM
