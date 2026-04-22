@@ -48,6 +48,7 @@
       <button class="tab-btn" data-tab="transcribe">Transcribe</button>
       <button class="tab-btn" data-tab="ocr">OCR</button>
     </nav>
+    <button class="header-about-btn" id="about-btn">About</button>
     <button class="nav-hamburger" id="nav-hamburger" aria-label="Open tools menu">
       <svg width="18" height="18" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <line x1="2" y1="5"  x2="20" y2="5"/>
@@ -906,6 +907,36 @@
       <div class="tab-permalink"><a class="tab-permalink-link" data-permalink="ocr">🔗 Link to this tool</a></div>
     </div>
   </section>
+
+  <!-- ── About / License modal ─────────────────────────────────────── -->
+  <div id="about-modal" class="about-modal" style="display:none" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
+    <div class="about-modal-box">
+      <div class="about-modal-header">
+        <h2 id="about-modal-title">Visuals Toolset</h2>
+        <button class="about-modal-close" id="about-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="about-modal-body">
+        <p>A privacy-first collection of browser-based media tools. All processing happens locally — nothing is uploaded to any server.</p>
+
+        <h3>License</h3>
+        <p>Copyright &copy; 2026 Patrick Dell. All rights reserved.</p>
+        <p>You&rsquo;re free to use this software for personal, educational, or non-commercial work. You may also share or modify it for non-commercial purposes, as long as you keep this copyright notice intact.</p>
+
+        <p><strong>Freelancers.</strong> If you&rsquo;re an individual working independently &mdash; a sole proprietor or contractor billing clients &mdash; you may use this software for paid work without needing a separate license. This doesn&rsquo;t extend to agencies or studios.</p>
+
+        <p><strong>The Globe and Mail.</strong> The Globe and Mail Inc., its subsidiaries, affiliates, and anyone working on its behalf, has a permanent, royalty-free right to use this software for any purpose &mdash; Editorial or otherwise &mdash; without restriction.</p>
+
+        <p><strong>Everyone else.</strong> Any other commercial use &mdash; by a company, agency, or organization &mdash; requires my written permission.</p>
+
+        <p>This software is provided as-is, with no warranties of any kind.</p>
+
+        <p class="about-meta">
+          Contact: <a href="mailto:patrickdell@gmail.com">patrickdell@gmail.com</a><br>
+          Source: <a href="https://github.com/patrickdell/visuals-toolset" target="_blank" rel="noopener">github.com/patrickdell/visuals-toolset</a>
+        </p>
+      </div>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>

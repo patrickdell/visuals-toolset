@@ -245,7 +245,8 @@ drawerAbout.className = 'nav-drawer-about';
 drawerAbout.innerHTML = `
   <strong>Visuals Toolset</strong>
   A privacy-first collection of browser-based media tools.<br>
-  All processing happens locally — nothing is uploaded.
+  All processing happens locally — nothing is uploaded.<br><br>
+  <button class="header-about-btn" data-about style="margin-top:2px">About &amp; License</button>
 `;
 drawer.appendChild(drawerAbout);
 
@@ -258,7 +259,20 @@ function closeDrawer() { drawer.classList.remove('open'); backdrop.classList.rem
 document.getElementById('nav-hamburger').addEventListener('click', openDrawer);
 document.getElementById('drawer-close').addEventListener('click', closeDrawer);
 backdrop.addEventListener('click', closeDrawer);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeDrawer(); closeAbout(); } });
+
+// ── About modal ──────────────────────────────────────────────────────────────
+const aboutModal = document.getElementById('about-modal');
+function openAbout()  { if (aboutModal) aboutModal.style.display = ''; }
+function closeAbout() { if (aboutModal) aboutModal.style.display = 'none'; }
+
+document.getElementById('about-btn')?.addEventListener('click', openAbout);
+document.getElementById('about-close')?.addEventListener('click', closeAbout);
+aboutModal?.addEventListener('click', e => { if (e.target === aboutModal) closeAbout(); });
+// Also wire any drawer "About & License" buttons (added dynamically above)
+document.addEventListener('click', e => {
+  if (e.target.closest('[data-about]')) { closeDrawer(); openAbout(); }
+});
 
 // Hash → localStorage → embed
 const hash = location.hash.replace('#', '');
