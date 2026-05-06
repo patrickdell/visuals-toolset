@@ -6,7 +6,7 @@ A privacy-first collection of browser-based media tools. Every operation runs
 entirely in the user's browser — nothing is uploaded to any server. Built as a
 single-page app using vanilla ES modules, no bundler, no build step.
 
-Deployed on Cloudflare Pages: **https://visuals-toolset.pages.dev**
+Deployed on Cloudflare Pages: **https://visuals-toolset.pages.dev**  
 Source: **https://github.com/patrickdell/visuals-toolset**
 
 ---
@@ -33,9 +33,6 @@ Single remote — `visuals-toolset`:
 ```
 git push visuals-toolset master
 ```
-
-Do **not** push to `origin` (the old `aspect-ratio-calculator` repo has been
-decoupled; the remote has been removed).
 
 ---
 
@@ -79,7 +76,8 @@ transcriber.worker.js   Web worker that loads Transformers.js and runs Whisper
 ocr.js                  Local OCR using Tesseract.js
 
 ── Shared utilities ──
-utils.js                saveFile (File System Access API + fallback), setupDropzone
+utils.js                setupDropzone, setupDropzoneMulti, setActiveChip,
+                        saveFile, setProgress
 ffmpeg-shared.js        FFmpeg.wasm singleton — imported by compressor.js & trimmer.js
                         so the 30 MB WASM loads only once
 
@@ -126,12 +124,21 @@ automatically via `prefers-color-scheme`. Key tokens:
 ## Key patterns
 
 ### File saves
-`saveFile(blob, filename, mimeType)` in `utils.js` — tries the File System Access
+`saveFile(blob, name, mime, dirHandle?)` in `utils.js` — tries the File System Access
 API first (shows a native save dialog), falls back to a hidden `<a download>` click.
+Optional `dirHandle` skips the picker and writes directly to a directory.
 
 ### Dropzones
-`setupDropzone(el, onFile)` in `utils.js` — handles drag-and-drop and
-`<input type="file">` for a given drop target element.
+`setupDropzone(el, filter, handler)` in `utils.js` — handles drag-and-drop and
+`<input type="file">` for a single file. `filter` is a function that returns true for
+accepted files (e.g. `f => f.type.startsWith('video/')`).
+
+`setupDropzoneMulti(el, filter, handler)` — same but passes the full filtered file
+array to `handler` for batch tools (e.g. compressor).
+
+### Chip groups
+`setActiveChip(container, activeBtn)` in `utils.js` — removes `.active` from all
+chips in the container and adds it to `activeBtn`.
 
 ### FFmpeg.wasm
 `ffmpeg-shared.js` exports a lazy-loaded singleton:
@@ -143,7 +150,7 @@ Always import from the shared module rather than creating a new `FFmpeg` instanc
 the WASM binary is 30 MB and must load only once.
 
 ### trm:loaded event
-`trimmer.js` fires `document.dispatchEvent(new CustomEvent('trm:loaded', { detail: { file, isVideo } }))` 
+`trimmer.js` fires `document.dispatchEvent(new CustomEvent('trm:loaded', { detail: { file, isVideo } }))`
 inside its `loadedmetadata` handler. `thumbnail.js` listens for this event to know
 when `videoEl.videoWidth` / `videoEl.videoHeight` are safe to read.
 
@@ -153,6 +160,11 @@ when `videoEl.videoWidth` / `videoEl.videoHeight` are safe to read.
 comparing against handle positions. `applyResize()` implements aspect-ratio-locked
 resize: the dragged corner moves, the opposite corner stays fixed, and the larger of
 the horizontal or vertical drag distance determines the new size.
+
+### Site footer
+`index.html` has a `<footer class="site-footer">` before the script tags with links to
+Forensics Toolset, the GitHub repo, and patrickdell.ca. Footer styles live at the
+bottom of `style.css` under `/* ── Site footer ── */`.
 
 ---
 
