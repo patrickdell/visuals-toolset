@@ -38,7 +38,6 @@ const S = {
 let worker       = null;
 let pendingBlob  = null;   // blob URL waiting to be revoked after detection
 let canvas, ctx, displayScale;
-let inDrawMode   = false;
 
 // Cached DOM elements
 const ui = {};
@@ -60,7 +59,6 @@ export function initRedactor() {
   ui.styleChips = document.getElementById('rd-style-chips');
   ui.targetChips = document.getElementById('rd-target-chips');
   ui.detectBtn = document.getElementById('rd-detect-btn');
-  ui.addBtn = document.getElementById('rd-add-btn');
   ui.clearBtn = document.getElementById('rd-clear-btn');
   ui.exportBtn = document.getElementById('rd-export-btn');
   ui.detectStatus  = document.getElementById('rd-detect-status');
@@ -94,7 +92,7 @@ export function initRedactor() {
 
   ui.radiusSlider.addEventListener('input', () => {
     S.radius = Number(ui.radiusSlider.value);
-    ui.radiusVal.textContent = S.radius;
+    ui.radiusVal.textContent = S.radius + '%';
     redraw();
   });
 
@@ -106,7 +104,6 @@ export function initRedactor() {
   });
 
   ui.detectBtn.addEventListener('click', startDetection);
-  ui.addBtn.addEventListener('click', enterDrawMode);
   ui.clearBtn.addEventListener('click', clearBoxes);
   ui.exportBtn.addEventListener('click', exportResult);
 
@@ -275,7 +272,7 @@ function redraw() {
 
 function drawBox(box, sel, fs) {
   const lw = Math.max(1.5, displayScale * 1.5);
-  const r  = S.radius;
+  const r  = (S.radius / 100) * Math.min(box.w, box.h) / 2;
   ctx.save();
 
   // Outline only — no fill; the live preview already fills the region
@@ -362,7 +359,7 @@ function updateCursor(pos) {
     }
   }
 
-  canvas.style.cursor = 'default';
+  canvas.style.cursor = 'crosshair'; // default: drawing is always available
 }
 
 // ── Mouse interaction ──────────────────────────────────────────────────────────
@@ -399,7 +396,9 @@ function onDown(e) {
     }
   }
 
+  // Nothing hit — deselect and start a new draw on drag
   S.selId = null;
+  S.drag  = { type: 'drawing', x0: pos.x, y0: pos.y };
   redraw();
 }
 
@@ -459,9 +458,8 @@ function onUp(e) {
       S.boxes.push(nb);
       S.selId = nb.id;
     }
-    inDrawMode = false;
     S.drag = null;
-    canvas.style.cursor = 'default';
+    canvas.style.cursor = 'crosshair';
     setStatus('');
     redraw();
     return;
@@ -488,13 +486,6 @@ function applyResize(box, handle, dx, dy, o) {
 }
 
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
-
-function enterDrawMode() {
-  inDrawMode = true;
-  S.drag = { type: 'drawing', x0: 0, y0: 0 };
-  canvas.style.cursor = 'crosshair';
-  setStatus('Click and drag on the image to draw a redaction region. Press Esc to cancel.');
-}
 
 function clearBoxes() {
   S.boxes = []; S.selId = null;
@@ -615,10 +606,10 @@ function getClampedBounds(box) {
   return { bx, by, bw, bh };
 }
 
-function applyRedaction(c, box, radius = 0) {
+function applyRedaction(c, box, radiusPct = 0) {
   const { bx, by, bw, bh } = getClampedBounds(box);
   if (bw <= 0 || bh <= 0) return;
-  const r = Math.min(radius, bw / 2, bh / 2);
+  const r = (radiusPct / 100) * Math.min(bw, bh) / 2;
 
   const styles = {
     [STYLES.BLACK]:    () => applyBlack(c, bx, by, bw, bh, r),
