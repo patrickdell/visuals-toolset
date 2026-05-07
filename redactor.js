@@ -73,6 +73,8 @@ export function initRedactor() {
     f => f.type.startsWith('image/') || f.type.startsWith('video/'),
     loadFile
   );
+  ui.dropzone.addEventListener('click', () => ui.fileInput.click());
+  ui.dropzone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') ui.fileInput.click(); });
   ui.fileInput.addEventListener('change', e => {
     if (e.target.files[0]) loadFile(e.target.files[0]);
   });
