@@ -44,7 +44,7 @@ body {
 
 .app-title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
   margin: 0;
 }
@@ -138,7 +138,7 @@ body {
   border: 1px solid var(--line);
   background: #0d0808;
   color: var(--ink);
-  font-size: 15px;
+  font-size: 14px;
   outline: none;
   transition: border-color .15s;
 }
