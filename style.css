@@ -42,6 +42,10 @@ body {
   background: var(--bg);
 }
 
+@media (min-width: 768px) {
+  .app-header { gap: 24px; }
+}
+
 .app-title {
   font-size: 15px;
   font-weight: 700;
@@ -1619,7 +1623,7 @@ mark.tr-match-current {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  max-width: 560px;
+  max-width: 520px;
   width: 100%;
   max-height: 85vh;
   overflow-y: auto;
