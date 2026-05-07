@@ -7,6 +7,11 @@ import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers
 env.allowLocalModels = false;
 env.useBrowserCache  = true;
 
+// Constants
+const MODEL_ID = 'Xenova/yolos-tiny';
+const DEFAULT_THRESHOLD = 0.3;
+const MSG_TYPES = { LOAD: 'load', DETECT: 'detect', STATUS: 'status', DOWNLOAD: 'download', READY: 'ready', DETECTIONS: 'detections', ERROR: 'error' };
+
 let detector     = null;
 let loadedModel  = null;
 
@@ -16,31 +21,30 @@ const VEHICLE_CLASSES  = new Set(['car', 'truck', 'bus', 'motorcycle', 'bicycle'
 self.addEventListener('message', async ({ data }) => {
 
   // ── Load model ──────────────────────────────────────────────────────────────
-  if (data.type === 'load') {
-    const modelId = 'Xenova/yolos-tiny';
-    if (detector && loadedModel === modelId) { self.postMessage({ type: 'ready' }); return; }
+  if (data.type === MSG_TYPES.LOAD) {
+    if (detector) { self.postMessage({ type: MSG_TYPES.READY }); return; }
     try {
-      self.postMessage({ type: 'status', text: 'Loading detection model…' });
-      detector = await pipeline('object-detection', modelId, {
+      self.postMessage({ type: MSG_TYPES.STATUS, text: 'Loading detection model…' });
+      detector = await pipeline('object-detection', MODEL_ID, {
         progress_callback: p => {
           if (p.status === 'downloading') {
-            self.postMessage({ type: 'download', loaded: p.loaded, total: p.total, file: p.file });
+            self.postMessage({ type: MSG_TYPES.DOWNLOAD, loaded: p.loaded, total: p.total, file: p.file });
           }
         },
       });
-      loadedModel = modelId;
-      self.postMessage({ type: 'ready' });
+      loadedModel = MODEL_ID;
+      self.postMessage({ type: MSG_TYPES.READY });
     } catch (e) {
-      self.postMessage({ type: 'error', message: e.message });
+      self.postMessage({ type: MSG_TYPES.ERROR, message: e.message });
     }
   }
 
   // ── Detect ──────────────────────────────────────────────────────────────────
-  if (data.type === 'detect') {
-    if (!detector) { self.postMessage({ type: 'error', message: 'Model not loaded' }); return; }
+  if (data.type === MSG_TYPES.DETECT) {
+    if (!detector) { self.postMessage({ type: MSG_TYPES.ERROR, message: 'Model not loaded' }); return; }
     try {
-      self.postMessage({ type: 'status', text: 'Detecting…' });
-      const output = await detector(data.imageUrl, { threshold: data.threshold ?? 0.3 });
+      self.postMessage({ type: MSG_TYPES.STATUS, text: 'Detecting…' });
+      const output = await detector(data.imageUrl, { threshold: data.threshold ?? DEFAULT_THRESHOLD });
 
       const boxes = output
         .filter(d => matchesTarget(d.label.toLowerCase(), data.target))
@@ -53,9 +57,9 @@ self.addEventListener('message', async ({ data }) => {
           score: d.score,
         }));
 
-      self.postMessage({ type: 'detections', boxes });
+      self.postMessage({ type: MSG_TYPES.DETECTIONS, boxes });
     } catch (e) {
-      self.postMessage({ type: 'error', message: e.message });
+      self.postMessage({ type: MSG_TYPES.ERROR, message: e.message });
     }
   }
 });

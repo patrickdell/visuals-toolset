@@ -11,6 +11,12 @@
 import { setupDropzone, saveFile, setActiveChip } from './utils.js';
 import { getFFmpeg } from './ffmpeg-shared.js';
 
+// ── Constants ──────────────────────────────────────────────────────────────────
+const STYLES = { BLUR: 'blur', PIXELATE: 'pixelate', BLACK: 'black' };
+const TARGETS = { PEOPLE: 'people', VEHICLES: 'vehicles', ALL: 'all' };
+const MSG_TYPES = { STATUS: 'status', DOWNLOAD: 'download', READY: 'ready', DETECTIONS: 'detections', ERROR: 'error', LOAD: 'load', DETECT: 'detect' };
+const DEFAULT_THRESHOLD = 0.3;
+
 // ── Module state ───────────────────────────────────────────────────────────────
 
 const S = {
@@ -22,51 +28,74 @@ const S = {
   boxes:   [],         // [{ id, x, y, w, h, label, score }]
   nextId:  1,
   selId:   null,
-  style:   'blur',     // 'blur' | 'pixelate' | 'black'
-  target:  'people',   // 'people' | 'vehicles' | 'all'
-  drag:    null,       // active drag/resize op
+  style:   STYLES.BLUR,
+  target:  TARGETS.PEOPLE,
+  drag:    null,       // active drag/resize op: { type, x0, y0, id?, handle?, orig?, boxRef? }
+  fileExt: null,
 };
 
-let inDrawMode   = false;
 let worker       = null;
 let pendingBlob  = null;   // blob URL waiting to be revoked after detection
 let canvas, ctx, displayScale;
 
+// Cached DOM elements
+const ui = {};
+
 // ── Init ───────────────────────────────────────────────────────────────────────
 
 export function initRedactor() {
-  canvas = document.getElementById('rd-canvas');
+  // Cache DOM elements
+  ui.canvas = document.getElementById('rd-canvas');
+  ui.dropzoneWrap = document.getElementById('rd-dropzone-wrap');
+  ui.dropzone = document.getElementById('rd-dropzone');
+  ui.fileInput = document.getElementById('rd-file-input');
+  ui.loadDifferent = document.getElementById('rd-load-different');
+  ui.loadedBar = document.getElementById('rd-loaded-bar');
+  ui.fileName = document.getElementById('rd-file-name');
+  ui.canvasWrap = document.getElementById('rd-canvas-wrap');
+  ui.bottomCard = document.getElementById('rd-bottom-card');
+  ui.videoNote = document.getElementById('rd-video-note');
+  ui.styleChips = document.getElementById('rd-style-chips');
+  ui.targetChips = document.getElementById('rd-target-chips');
+  ui.detectBtn = document.getElementById('rd-detect-btn');
+  ui.addBtn = document.getElementById('rd-add-btn');
+  ui.clearBtn = document.getElementById('rd-clear-btn');
+  ui.exportBtn = document.getElementById('rd-export-btn');
+  ui.detectStatus = document.getElementById('rd-detect-status');
+  ui.exportStatus = document.getElementById('rd-export-status');
+
+  canvas = ui.canvas;
   ctx    = canvas.getContext('2d', { willReadFrequently: true });
   displayScale = 1;
 
   setupDropzone(
-    document.getElementById('rd-dropzone'),
+    ui.dropzone,
     f => f.type.startsWith('image/') || f.type.startsWith('video/'),
     loadFile
   );
-  document.getElementById('rd-file-input').addEventListener('change', e => {
+  ui.fileInput.addEventListener('change', e => {
     if (e.target.files[0]) loadFile(e.target.files[0]);
   });
-  document.getElementById('rd-load-different').addEventListener('click', resetToDropzone);
+  ui.loadDifferent.addEventListener('click', resetToDropzone);
 
-  document.getElementById('rd-style-chips').addEventListener('click', e => {
+  ui.styleChips.addEventListener('click', e => {
     const chip = e.target.closest('.chip[data-style]');
     if (!chip) return;
     S.style = chip.dataset.style;
-    setActiveChip(document.getElementById('rd-style-chips'), chip);
+    setActiveChip(ui.styleChips, chip);
   });
 
-  document.getElementById('rd-target-chips').addEventListener('click', e => {
+  ui.targetChips.addEventListener('click', e => {
     const chip = e.target.closest('.chip[data-target]');
     if (!chip) return;
     S.target = chip.dataset.target;
-    setActiveChip(document.getElementById('rd-target-chips'), chip);
+    setActiveChip(ui.targetChips, chip);
   });
 
-  document.getElementById('rd-detect-btn').addEventListener('click', startDetection);
-  document.getElementById('rd-add-btn').addEventListener('click', enterDrawMode);
-  document.getElementById('rd-clear-btn').addEventListener('click', clearBoxes);
-  document.getElementById('rd-export-btn').addEventListener('click', exportResult);
+  ui.detectBtn.addEventListener('click', startDetection);
+  ui.addBtn.addEventListener('click', enterDrawMode);
+  ui.clearBtn.addEventListener('click', clearBoxes);
+  ui.exportBtn.addEventListener('click', exportResult);
 
   canvas.addEventListener('mousedown', onDown);
   canvas.addEventListener('mousemove', onMove);
@@ -85,8 +114,7 @@ export function initRedactor() {
       S.selId = null;
       redraw();
     }
-    if (e.key === 'Escape' && inDrawMode) {
-      inDrawMode = false;
+    if (e.key === 'Escape' && S.drag?.type === 'drawing') {
       S.drag = null;
       canvas.style.cursor = 'default';
       setStatus('');
@@ -100,9 +128,9 @@ export function initRedactor() {
 async function loadFile(file) {
   S.file    = file;
   S.isVideo = file.type.startsWith('video/');
+  S.fileExt = file.name.split('.').pop();
   S.boxes   = [];
   S.selId   = null;
-  inDrawMode = false;
   S.drag    = null;
   setStatus('');
   setExportStatus('');
@@ -133,12 +161,24 @@ async function extractVideoFrame(url) {
     v.playsInline = true;
     v.addEventListener('loadeddata', () => { v.currentTime = 0.5; });
     v.addEventListener('seeked', async () => {
-      S.bitmap = await createImageBitmap(v);
-      S.natW   = v.videoWidth;
-      S.natH   = v.videoHeight;
-      resolve();
+      try {
+        S.bitmap = await createImageBitmap(v);
+        S.natW   = v.videoWidth;
+        S.natH   = v.videoHeight;
+        resolve();
+      } catch (e) {
+        reject(e);
+      } finally {
+        // Clean up: remove video element and clear src to release resources
+        v.src = '';
+        v.remove();
+      }
     });
-    v.addEventListener('error', reject);
+    v.addEventListener('error', e => {
+      v.src = '';
+      v.remove();
+      reject(e);
+    });
     v.load();
   });
 }
@@ -146,28 +186,25 @@ async function extractVideoFrame(url) {
 function resetToDropzone() {
   S.file = S.bitmap = null;
   S.boxes = []; S.selId = null;
-  inDrawMode = false; S.drag = null;
-  document.getElementById('rd-dropzone-wrap').style.display = '';
-  document.getElementById('rd-loaded-bar').style.display = 'none';
-  document.getElementById('rd-canvas-wrap').style.display = 'none';
-  document.getElementById('rd-bottom-card').style.display = 'none';
-  document.getElementById('rd-file-input').value = '';
+  S.drag = null;
+  ui.dropzoneWrap.style.display = '';
+  ui.loadedBar.style.display = 'none';
+  ui.canvasWrap.style.display = 'none';
+  ui.bottomCard.style.display = 'none';
+  ui.fileInput.value = '';
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  setStatus(''); setExportStatus('');
+  setStatus('');
+  setExportStatus('');
 }
 
 function showLoaded(name) {
-  document.getElementById('rd-dropzone-wrap').style.display = 'none';
-  document.getElementById('rd-loaded-bar').style.display = '';
-  document.getElementById('rd-file-name').textContent = name;
-  document.getElementById('rd-canvas-wrap').style.display = 'block';
-  document.getElementById('rd-bottom-card').style.display = 'block';
-  document.getElementById('rd-detect-btn').disabled = false;
-  if (S.isVideo) {
-    document.getElementById('rd-video-note').style.display = '';
-  } else {
-    document.getElementById('rd-video-note').style.display = 'none';
-  }
+  ui.dropzoneWrap.style.display = 'none';
+  ui.loadedBar.style.display = '';
+  ui.fileName.textContent = name;
+  ui.canvasWrap.style.display = 'block';
+  ui.bottomCard.style.display = 'block';
+  ui.detectBtn.disabled = false;
+  ui.videoNote.style.display = S.isVideo ? '' : 'none';
 }
 
 // ── Canvas setup ───────────────────────────────────────────────────────────────
@@ -200,14 +237,18 @@ function redraw() {
   if (!S.bitmap) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(S.bitmap, 0, 0);
-  for (const box of S.boxes) drawBox(box, box.id === S.selId);
+
+  // Set font once for all boxes
+  const fs = Math.max(11, Math.round(13 * displayScale));
+  ctx.font = `500 ${fs}px system-ui, sans-serif`;
+
+  for (const box of S.boxes) drawBox(box, box.id === S.selId, fs);
 }
 
-function drawBox(box, sel) {
+function drawBox(box, sel, fs) {
   const lw = Math.max(1.5, displayScale * 1.5);
   ctx.save();
 
-  // Box fill + stroke
   ctx.strokeStyle = sel ? '#ffffff' : 'rgba(255, 70, 70, 0.95)';
   ctx.fillStyle   = 'rgba(255, 70, 70, 0.12)';
   ctx.lineWidth   = lw;
@@ -218,8 +259,6 @@ function drawBox(box, sel) {
 
   // Label badge
   const label = (box.label || 'region') + (box.score ? ` ${Math.round(box.score * 100)}%` : '');
-  const fs    = Math.max(11, Math.round(13 * displayScale));
-  ctx.font    = `500 ${fs}px system-ui, sans-serif`;
   const tw    = ctx.measureText(label).width + 8 * displayScale;
   const bh    = fs + 6 * displayScale;
   const badgeY = Math.max(0, box.y - bh);
@@ -230,17 +269,21 @@ function drawBox(box, sel) {
 
   // Corner handles when selected
   if (sel) {
-    for (const h of getHandles(box)) {
-      ctx.beginPath();
-      ctx.arc(h.x, h.y, HR * displayScale, 0, Math.PI * 2);
-      ctx.fillStyle   = '#fff';
-      ctx.strokeStyle = 'rgba(255,70,70,0.95)';
-      ctx.lineWidth   = Math.max(1, displayScale);
-      ctx.fill();
-      ctx.stroke();
-    }
+    drawHandles(box);
   }
   ctx.restore();
+}
+
+function drawHandles(box) {
+  for (const h of getHandles(box)) {
+    ctx.beginPath();
+    ctx.arc(h.x, h.y, HR * displayScale, 0, Math.PI * 2);
+    ctx.fillStyle   = '#fff';
+    ctx.strokeStyle = 'rgba(255,70,70,0.95)';
+    ctx.lineWidth   = Math.max(1, displayScale);
+    ctx.fill();
+    ctx.stroke();
+  }
 }
 
 function getHandles(box) {
@@ -270,14 +313,28 @@ function cursorFor(handle) {
 }
 
 function updateCursor(pos) {
-  if (inDrawMode) { canvas.style.cursor = 'crosshair'; return; }
-  if (S.selId !== null) {
-    const sel = S.boxes.find(b => b.id === S.selId);
-    if (sel) { const h = hitHandle(pos, sel); if (h) { canvas.style.cursor = cursorFor(h); return; } }
+  if (S.drag?.type === 'drawing') {
+    canvas.style.cursor = 'crosshair';
+    return;
   }
+
+  // Check selected box handles
+  if (S.selId !== null && S.drag?.boxRef) {
+    const handle = hitHandle(pos, S.drag.boxRef);
+    if (handle) {
+      canvas.style.cursor = cursorFor(handle);
+      return;
+    }
+  }
+
+  // Check any box (reverse order for topmost)
   for (let i = S.boxes.length - 1; i >= 0; i--) {
-    if (hitBox(pos, S.boxes[i])) { canvas.style.cursor = 'move'; return; }
+    if (hitBox(pos, S.boxes[i])) {
+      canvas.style.cursor = 'move';
+      return;
+    }
   }
+
   canvas.style.cursor = 'default';
 }
 
@@ -287,7 +344,7 @@ function onDown(e) {
   if (!S.bitmap) return;
   const pos = canvasPos(e);
 
-  if (inDrawMode) {
+  if (S.drag?.type === 'drawing') {
     S.drag = { type: 'drawing', x0: pos.x, y0: pos.y };
     return;
   }
@@ -295,21 +352,20 @@ function onDown(e) {
   // Resize handle of selected box
   if (S.selId !== null) {
     const sel = S.boxes.find(b => b.id === S.selId);
-    if (sel) {
-      const h = hitHandle(pos, sel);
-      if (h) {
-        S.drag = { type: 'resize', id: S.selId, handle: h, x0: pos.x, y0: pos.y, orig: { ...sel } };
-        canvas.style.cursor = cursorFor(h);
-        return;
-      }
+    const handle = sel ? hitHandle(pos, sel) : null;
+    if (handle) {
+      S.drag = { type: 'resize', id: S.selId, handle, x0: pos.x, y0: pos.y, orig: { ...sel }, boxRef: sel };
+      canvas.style.cursor = cursorFor(handle);
+      return;
     }
   }
 
   // Move any box (reverse order so topmost wins)
   for (let i = S.boxes.length - 1; i >= 0; i--) {
-    if (hitBox(pos, S.boxes[i])) {
-      S.selId = S.boxes[i].id;
-      S.drag  = { type: 'move', id: S.boxes[i].id, x0: pos.x, y0: pos.y, orig: { ...S.boxes[i] } };
+    const box = S.boxes[i];
+    if (hitBox(pos, box)) {
+      S.selId = box.id;
+      S.drag  = { type: 'move', id: box.id, x0: pos.x, y0: pos.y, orig: { ...box }, boxRef: box };
       canvas.style.cursor = 'move';
       redraw();
       return;
@@ -324,7 +380,10 @@ function onMove(e) {
   if (!S.bitmap) return;
   const pos = canvasPos(e);
 
-  if (!S.drag) { updateCursor(pos); return; }
+  if (!S.drag) {
+    updateCursor(pos);
+    return;
+  }
 
   const dx = pos.x - S.drag.x0;
   const dy = pos.y - S.drag.y0;
@@ -341,7 +400,7 @@ function onMove(e) {
     return;
   }
 
-  const box = S.boxes.find(b => b.id === S.drag.id);
+  const box = S.drag.boxRef;
   if (!box) return;
 
   if (S.drag.type === 'move') {
@@ -426,30 +485,35 @@ function getWorker() {
 }
 
 function onWorkerMsg({ data }) {
-  if (data.type === 'status')     { setStatus(data.text); }
-  if (data.type === 'download')   { setStatus(`Downloading model… ${data.total ? Math.round(data.loaded / data.total * 100) : 0}%`); }
-  if (data.type === 'ready')      { runInference(); }
-  if (data.type === 'detections') { applyDetections(data.boxes); }
-  if (data.type === 'error') {
-    setStatus('Detection failed: ' + data.message);
-    document.getElementById('rd-detect-btn').disabled = false;
-  }
+  const handlers = {
+    [MSG_TYPES.STATUS]: (d) => setStatus(d.text),
+    [MSG_TYPES.DOWNLOAD]: (d) => setStatus(`Downloading model… ${d.total ? Math.round(d.loaded / d.total * 100) : 0}%`),
+    [MSG_TYPES.READY]: () => runInference(),
+    [MSG_TYPES.DETECTIONS]: (d) => applyDetections(d.boxes),
+    [MSG_TYPES.ERROR]: (d) => {
+      setStatus('Detection failed: ' + d.message);
+      ui.detectBtn.disabled = false;
+    },
+  };
+
+  (handlers[data.type] || (() => {}))(data);
 }
 
 function startDetection() {
   if (!S.bitmap) return;
-  document.getElementById('rd-detect-btn').disabled = true;
+  ui.detectBtn.disabled = true;
   setStatus('Loading model… (~30 MB on first run, then cached)');
-  getWorker().postMessage({ type: 'load' });
+  getWorker().postMessage({ type: MSG_TYPES.LOAD });
 }
 
 function runInference() {
-  const off = document.createElement('canvas');
-  off.width = S.natW; off.height = S.natH;
+  const off = createOffscreenCanvas(S.natW, S.natH);
   off.getContext('2d').drawImage(S.bitmap, 0, 0);
   off.toBlob(blob => {
+    // Revoke old pending blob if any
+    if (pendingBlob) URL.revokeObjectURL(pendingBlob);
     pendingBlob = URL.createObjectURL(blob);
-    getWorker().postMessage({ type: 'detect', imageUrl: pendingBlob, target: S.target, threshold: 0.3 });
+    getWorker().postMessage({ type: MSG_TYPES.DETECT, imageUrl: pendingBlob, target: S.target, threshold: DEFAULT_THRESHOLD });
   }, 'image/jpeg', 0.85);
 }
 
@@ -457,7 +521,7 @@ function applyDetections(rawBoxes) {
   if (pendingBlob) { URL.revokeObjectURL(pendingBlob); pendingBlob = null; }
 
   const manual   = S.boxes.filter(b => b.label === 'manual');
-  const detected = rawBoxes.map(b => ({ ...b, id: S.nextId++ }));
+  const detected = rawBoxes.length > 0 ? rawBoxes.map(b => ({ ...b, id: S.nextId++ })) : [];
   S.boxes = [...manual, ...detected];
   S.selId = null;
 
@@ -466,22 +530,20 @@ function applyDetections(rawBoxes) {
     ? `Found ${n} region${n !== 1 ? 's' : ''}. Click to select and adjust, then export.`
     : 'No regions detected. Try a different target or add regions manually.'
   );
-  document.getElementById('rd-detect-btn').disabled = false;
+  ui.detectBtn.disabled = false;
   redraw();
 }
 
 function setStatus(text) {
-  const el = document.getElementById('rd-detect-status');
-  if (!el) return;
-  el.textContent  = text;
-  el.style.display = text ? '' : 'none';
+  if (!ui.detectStatus) return;
+  ui.detectStatus.textContent = text;
+  ui.detectStatus.style.display = text ? '' : 'none';
 }
 
 function setExportStatus(text) {
-  const el = document.getElementById('rd-export-status');
-  if (!el) return;
-  el.textContent  = text;
-  el.style.display = text ? '' : 'none';
+  if (!ui.exportStatus) return;
+  ui.exportStatus.textContent = text;
+  ui.exportStatus.style.display = text ? '' : 'none';
 }
 
 // ── Export ─────────────────────────────────────────────────────────────────────
@@ -489,20 +551,19 @@ function setExportStatus(text) {
 async function exportResult() {
   if (!S.file) return;
   if (S.boxes.length === 0) { setExportStatus('Add at least one redaction region first.'); return; }
-  document.getElementById('rd-export-btn').disabled = true;
+  ui.exportBtn.disabled = true;
   setExportStatus('');
   try {
     if (S.isVideo) await exportVideo();
     else exportImage();
   } finally {
-    document.getElementById('rd-export-btn').disabled = false;
+    ui.exportBtn.disabled = false;
   }
 }
 
 // Image: canvas-based redaction
 function exportImage() {
-  const off = document.createElement('canvas');
-  off.width = S.natW; off.height = S.natH;
+  const off = createOffscreenCanvas(S.natW, S.natH);
   const c = off.getContext('2d');
   c.drawImage(S.bitmap, 0, 0);
   for (const box of S.boxes) applyRedaction(c, box);
@@ -511,40 +572,60 @@ function exportImage() {
   }, 'image/png');
 }
 
-function applyRedaction(c, box) {
+function createOffscreenCanvas(w, h) {
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  return canvas;
+}
+
+function getClampedBounds(box) {
   const bx = Math.max(0, Math.round(box.x));
   const by = Math.max(0, Math.round(box.y));
   const bw = Math.min(Math.round(box.w), S.natW - bx);
   const bh = Math.min(Math.round(box.h), S.natH - by);
+  return { bx, by, bw, bh };
+}
+
+function applyRedaction(c, box) {
+  const { bx, by, bw, bh } = getClampedBounds(box);
   if (bw <= 0 || bh <= 0) return;
 
-  if (S.style === 'black') {
-    c.fillStyle = '#000';
-    c.fillRect(bx, by, bw, bh);
-    return;
-  }
+  const styles = {
+    [STYLES.BLACK]: () => applyBlack(c, bx, by, bw, bh),
+    [STYLES.BLUR]: () => applyBlur(c, bx, by, bw, bh),
+    [STYLES.PIXELATE]: () => applyPixelate(c, bx, by, bw, bh),
+  };
 
-  if (S.style === 'blur') {
-    const sigma = Math.max(8, Math.round(Math.min(bw, bh) / 6));
-    const pad   = sigma * 2;
-    const ex    = Math.max(0, bx - pad);
-    const ey    = Math.max(0, by - pad);
-    const ew    = Math.min(S.natW, bx + bw + pad) - ex;
-    const eh    = Math.min(S.natH, by + bh + pad) - ey;
-    c.save();
-    c.beginPath(); c.rect(bx, by, bw, bh); c.clip();
-    c.filter = `blur(${sigma}px)`;
-    c.drawImage(S.bitmap, ex, ey, ew, eh, ex, ey, ew, eh);
-    c.restore();
-    return;
-  }
+  (styles[S.style] || (() => {}))();
+}
 
-  // Pixelate
-  const ps  = Math.max(6, Math.round(Math.min(bw, bh) / 12));
-  const tw  = Math.max(1, Math.round(bw / ps));
-  const th  = Math.max(1, Math.round(bh / ps));
-  const tmp = document.createElement('canvas');
-  tmp.width = tw; tmp.height = th;
+function applyBlack(c, bx, by, bw, bh) {
+  c.fillStyle = '#000';
+  c.fillRect(bx, by, bw, bh);
+}
+
+function applyBlur(c, bx, by, bw, bh) {
+  const sigma = Math.max(8, Math.round(Math.min(bw, bh) / 6));
+  const pad   = sigma * 2;
+  const ex    = Math.max(0, bx - pad);
+  const ey    = Math.max(0, by - pad);
+  const ew    = Math.min(S.natW, bx + bw + pad) - ex;
+  const eh    = Math.min(S.natH, by + bh + pad) - ey;
+  c.save();
+  c.beginPath();
+  c.rect(bx, by, bw, bh);
+  c.clip();
+  c.filter = `blur(${sigma}px)`;
+  c.drawImage(S.bitmap, ex, ey, ew, eh, ex, ey, ew, eh);
+  c.restore();
+}
+
+function applyPixelate(c, bx, by, bw, bh) {
+  const ps = Math.max(6, Math.round(Math.min(bw, bh) / 12));
+  const tw = Math.max(1, Math.round(bw / ps));
+  const th = Math.max(1, Math.round(bh / ps));
+  const tmp = createOffscreenCanvas(tw, th);
   tmp.getContext('2d').drawImage(S.bitmap, bx, by, bw, bh, 0, 0, tw, th);
   c.save();
   c.imageSmoothingEnabled = false;
@@ -557,8 +638,7 @@ async function exportVideo() {
   setExportStatus('Loading FFmpeg…');
   try {
     const ff    = await getFFmpeg();
-    const ext   = S.file.name.split('.').pop();
-    const inFile  = `rd_in.${ext}`;
+    const inFile  = `rd_in.${S.fileExt}`;
     const outFile = 'rd_out.mp4';
 
     setExportStatus('Writing input…');
@@ -595,7 +675,7 @@ function buildVideoArgs(boxes, style, inFile, outFile) {
   if (boxes.length === 0) return ['-i', inFile, '-c', 'copy', outFile];
 
   // Solid black: simple drawbox chain
-  if (style === 'black') {
+  if (style === STYLES.BLACK) {
     const vf = boxes.map(b => {
       const { x, y, w, h } = cl(b);
       return `drawbox=x=${x}:y=${y}:w=${w}:h=${h}:color=black@1:t=fill`;
@@ -611,7 +691,7 @@ function buildVideoArgs(boxes, style, inFile, outFile) {
   boxes.forEach((b, i) => {
     const { x, y, w, h } = cl(b);
     const sz = Math.max(10, Math.round(Math.min(w, h) / 4));
-    const fx = style === 'blur'
+    const fx = style === STYLES.BLUR
       ? `avgblur=sizeX=${sz}:sizeY=${sz}`
       : `scale=${Math.max(1, Math.round(w / 12))}:${Math.max(1, Math.round(h / 12))}:flags=neighbor,scale=${w}:${h}:flags=neighbor`;
     fc.push(`[vs${i}]crop=${w}:${h}:${x}:${y},${fx}[vblr${i}]`);
