@@ -57,8 +57,16 @@ export function setActiveChip(container, activeBtn) {
  * @param {string}                    name        - suggested filename
  * @param {string}                    mime        - MIME type string
  * @param {FileSystemDirectoryHandle} [dirHandle] - optional output folder
+ * @param {Object}                    [opts]
+ * @param {boolean}                   [opts.direct] - skip picker/share; use <a download> directly
  */
-export async function saveFile(blob, name, mime, dirHandle) {
+export async function saveFile(blob, name, mime, dirHandle, opts = {}) {
+  if (opts.direct) {
+    const url = URL.createObjectURL(blob);
+    Object.assign(document.createElement('a'), { href: url, download: name }).click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    return;
+  }
   // 1. Output folder
   if (dirHandle) {
     try {

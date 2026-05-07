@@ -764,6 +764,8 @@ input[type="color"] {
 /* ── New panel visibility ────────────────────── */
 #panel-trim    { display: none; }
 #panel-trim.visible    { display: block; }
+#panel-redact  { display: none; }
+#panel-redact.visible  { display: block; }
 #panel-extract { display: none; }
 #panel-extract.visible { display: block; }
 #panel-palette { display: none; }
@@ -1702,6 +1704,28 @@ mark.tr-match-current {
 .footer-sep { color: var(--line); }
 
 /* ── Auto-Redactor ──────────────────────────────────────────────────────────── */
+
+.rd-radius-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 12px;
+}
+.rd-radius-row .chips-label {
+  white-space: nowrap;
+  margin: 0;
+}
+.rd-radius-row input[type="range"] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+.rd-radius-row .rd-radius-display {
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 
 .rd-layout {
   display: flex;

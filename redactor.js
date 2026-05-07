@@ -32,11 +32,13 @@ const S = {
   target:  TARGETS.PEOPLE,
   drag:    null,       // active drag/resize op: { type, x0, y0, id?, handle?, orig?, boxRef? }
   fileExt: null,
+  radius:  0,          // global corner radius for redaction boxes (natural-pixel units)
 };
 
 let worker       = null;
 let pendingBlob  = null;   // blob URL waiting to be revoked after detection
 let canvas, ctx, displayScale;
+let inDrawMode   = false;
 
 // Cached DOM elements
 const ui = {};
@@ -61,8 +63,10 @@ export function initRedactor() {
   ui.addBtn = document.getElementById('rd-add-btn');
   ui.clearBtn = document.getElementById('rd-clear-btn');
   ui.exportBtn = document.getElementById('rd-export-btn');
-  ui.detectStatus = document.getElementById('rd-detect-status');
-  ui.exportStatus = document.getElementById('rd-export-status');
+  ui.detectStatus  = document.getElementById('rd-detect-status');
+  ui.exportStatus  = document.getElementById('rd-export-status');
+  ui.radiusSlider  = document.getElementById('rd-radius');
+  ui.radiusVal     = document.getElementById('rd-radius-val');
 
   canvas = ui.canvas;
   ctx    = canvas.getContext('2d', { willReadFrequently: true });
@@ -85,6 +89,13 @@ export function initRedactor() {
     if (!chip) return;
     S.style = chip.dataset.style;
     setActiveChip(ui.styleChips, chip);
+    redraw();
+  });
+
+  ui.radiusSlider.addEventListener('input', () => {
+    S.radius = Number(ui.radiusSlider.value);
+    ui.radiusVal.textContent = S.radius;
+    redraw();
   });
 
   ui.targetChips.addEventListener('click', e => {
@@ -235,12 +246,27 @@ function canvasPos(e) {
 
 const HR = 6; // handle hit-radius in CSS pixels
 
+/** Build a rounded-rectangle path on ctx (does not stroke/fill). */
+function roundedRectPath(c, x, y, w, h, r) {
+  r = Math.min(r, w / 2, h / 2);
+  c.beginPath();
+  c.moveTo(x + r, y);
+  c.arcTo(x + w, y,     x + w, y + h, r);
+  c.arcTo(x + w, y + h, x,     y + h, r);
+  c.arcTo(x,     y + h, x,     y,     r);
+  c.arcTo(x,     y,     x + w, y,     r);
+  c.closePath();
+}
+
 function redraw() {
   if (!S.bitmap) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.drawImage(S.bitmap, 0, 0);
 
-  // Set font once for all boxes
+  // Apply live redaction effects under the overlay
+  for (const box of S.boxes) applyRedaction(ctx, box, S.radius);
+
+  // Set font once, then draw selection overlays on top
   const fs = Math.max(11, Math.round(13 * displayScale));
   ctx.font = `500 ${fs}px system-ui, sans-serif`;
 
@@ -249,14 +275,15 @@ function redraw() {
 
 function drawBox(box, sel, fs) {
   const lw = Math.max(1.5, displayScale * 1.5);
+  const r  = S.radius;
   ctx.save();
 
-  ctx.strokeStyle = sel ? '#ffffff' : 'rgba(255, 70, 70, 0.95)';
-  ctx.fillStyle   = 'rgba(255, 70, 70, 0.12)';
+  // Outline only — no fill; the live preview already fills the region
+  ctx.strokeStyle = sel ? '#ffffff' : 'rgba(255, 255, 255, 0.7)';
   ctx.lineWidth   = lw;
   ctx.setLineDash(sel ? [] : [Math.round(6 * displayScale), Math.round(4 * displayScale)]);
-  ctx.strokeRect(box.x, box.y, box.w, box.h);
-  ctx.fillRect(box.x, box.y, box.w, box.h);
+  roundedRectPath(ctx, box.x, box.y, box.w, box.h, r);
+  ctx.stroke();
   ctx.setLineDash([]);
 
   // Label badge
@@ -264,15 +291,13 @@ function drawBox(box, sel, fs) {
   const tw    = ctx.measureText(label).width + 8 * displayScale;
   const bh    = fs + 6 * displayScale;
   const badgeY = Math.max(0, box.y - bh);
-  ctx.fillStyle = sel ? 'rgba(255,255,255,0.95)' : 'rgba(255,70,70,0.95)';
+  ctx.fillStyle = sel ? 'rgba(255,255,255,0.95)' : 'rgba(80,80,80,0.85)';
   ctx.fillRect(box.x, badgeY, tw, bh);
-  ctx.fillStyle = sel ? '#111' : '#fff';
+  ctx.fillStyle = sel ? '#111' : '#eee';
   ctx.fillText(label, box.x + 4 * displayScale, badgeY + bh - 4 * displayScale);
 
   // Corner handles when selected
-  if (sel) {
-    drawHandles(box);
-  }
+  if (sel) drawHandles(box);
   ctx.restore();
 }
 
@@ -466,6 +491,7 @@ function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 
 function enterDrawMode() {
   inDrawMode = true;
+  S.drag = { type: 'drawing', x0: 0, y0: 0 };
   canvas.style.cursor = 'crosshair';
   setStatus('Click and drag on the image to draw a redaction region. Press Esc to cancel.');
 }
@@ -568,9 +594,9 @@ function exportImage() {
   const off = createOffscreenCanvas(S.natW, S.natH);
   const c = off.getContext('2d');
   c.drawImage(S.bitmap, 0, 0);
-  for (const box of S.boxes) applyRedaction(c, box);
+  for (const box of S.boxes) applyRedaction(c, box, S.radius);
   off.toBlob(blob => {
-    saveFile(blob, S.file.name.replace(/\.[^.]+$/, '') + '_redacted.png', 'image/png');
+    saveFile(blob, S.file.name.replace(/\.[^.]+$/, '') + '_redacted.png', 'image/png', null, { direct: true });
   }, 'image/png');
 }
 
@@ -589,25 +615,30 @@ function getClampedBounds(box) {
   return { bx, by, bw, bh };
 }
 
-function applyRedaction(c, box) {
+function applyRedaction(c, box, radius = 0) {
   const { bx, by, bw, bh } = getClampedBounds(box);
   if (bw <= 0 || bh <= 0) return;
+  const r = Math.min(radius, bw / 2, bh / 2);
 
   const styles = {
-    [STYLES.BLACK]: () => applyBlack(c, bx, by, bw, bh),
-    [STYLES.BLUR]: () => applyBlur(c, bx, by, bw, bh),
-    [STYLES.PIXELATE]: () => applyPixelate(c, bx, by, bw, bh),
+    [STYLES.BLACK]:    () => applyBlack(c, bx, by, bw, bh, r),
+    [STYLES.BLUR]:     () => applyBlur(c, bx, by, bw, bh, r),
+    [STYLES.PIXELATE]: () => applyPixelate(c, bx, by, bw, bh, r),
   };
 
   (styles[S.style] || (() => {}))();
 }
 
-function applyBlack(c, bx, by, bw, bh) {
+function applyBlack(c, bx, by, bw, bh, r = 0) {
+  c.save();
+  roundedRectPath(c, bx, by, bw, bh, r);
+  c.clip();
   c.fillStyle = '#000';
   c.fillRect(bx, by, bw, bh);
+  c.restore();
 }
 
-function applyBlur(c, bx, by, bw, bh) {
+function applyBlur(c, bx, by, bw, bh, r = 0) {
   const sigma = Math.max(8, Math.round(Math.min(bw, bh) / 6));
   const pad   = sigma * 2;
   const ex    = Math.max(0, bx - pad);
@@ -615,21 +646,22 @@ function applyBlur(c, bx, by, bw, bh) {
   const ew    = Math.min(S.natW, bx + bw + pad) - ex;
   const eh    = Math.min(S.natH, by + bh + pad) - ey;
   c.save();
-  c.beginPath();
-  c.rect(bx, by, bw, bh);
+  roundedRectPath(c, bx, by, bw, bh, r);
   c.clip();
   c.filter = `blur(${sigma}px)`;
   c.drawImage(S.bitmap, ex, ey, ew, eh, ex, ey, ew, eh);
   c.restore();
 }
 
-function applyPixelate(c, bx, by, bw, bh) {
+function applyPixelate(c, bx, by, bw, bh, r = 0) {
   const ps = Math.max(6, Math.round(Math.min(bw, bh) / 12));
   const tw = Math.max(1, Math.round(bw / ps));
   const th = Math.max(1, Math.round(bh / ps));
   const tmp = createOffscreenCanvas(tw, th);
   tmp.getContext('2d').drawImage(S.bitmap, bx, by, bw, bh, 0, 0, tw, th);
   c.save();
+  roundedRectPath(c, bx, by, bw, bh, r);
+  c.clip();
   c.imageSmoothingEnabled = false;
   c.drawImage(tmp, 0, 0, tw, th, bx, by, bw, bh);
   c.restore();
@@ -657,7 +689,9 @@ async function exportVideo() {
     saveFile(
       new Blob([data.buffer], { type: 'video/mp4' }),
       S.file.name.replace(/\.[^.]+$/, '') + '_redacted.mp4',
-      'video/mp4'
+      'video/mp4',
+      null,
+      { direct: true }
     );
     setExportStatus('');
   } catch (err) {
