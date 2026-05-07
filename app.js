@@ -63,8 +63,12 @@ let drawer; // set up below before first activateTab call
 function activateTab(tab) {
   if (!panels[tab]) tab = 'embed';
   tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  Object.values(panels).forEach(id => document.getElementById(id)?.classList.remove('visible'));
-  document.getElementById(panels[tab])?.classList.add('visible');
+  Object.values(panels).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.classList.remove('visible'); el.style.display = 'none'; }
+  });
+  const activeEl = document.getElementById(panels[tab]);
+  if (activeEl) { activeEl.classList.add('visible'); activeEl.style.display = 'block'; }
   history.replaceState(null, '', '#' + tab);
   localStorage.setItem('ar_tab', tab);
   if (drawer) {
