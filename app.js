@@ -1,5 +1,6 @@
 /**
  * app.js — tab routing and shared ratio state
+ * Force rebuild: Auto-Redactor deployment
  */
 
 import { PRESETS, initCalculator } from './calculator.js';
