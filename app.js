@@ -15,6 +15,7 @@ import { initWaveformRenderer }   from './waveform-renderer.js';
 import { initTranscriber }        from './transcriber.js';
 import { initOcr }                from './ocr.js';
 import { initThumbnail }          from './thumbnail.js';
+import { initRedactor }           from './redactor.js';
 
 // ── Build preset chips ────────────────────────────────────────────────────
 
@@ -53,6 +54,7 @@ const panels  = {
   waveform:   'panel-waveform',
   transcribe: 'panel-transcribe',
   ocr:        'panel-ocr',
+  redact:     'panel-redact',
 };
 
 let drawer; // set up below before first activateTab call
@@ -94,6 +96,7 @@ const cropChips = document.getElementById('cropChips');
 
 initEmbed();
 initLabeller();
+initRedactor();
 initWaveformRenderer();
 initTranscriber();
 initOcr();

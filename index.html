@@ -46,6 +46,7 @@
       <button class="tab-btn" data-tab="waveform">Waveform</button>
       <button class="tab-btn" data-tab="transcribe">Transcribe</button>
       <button class="tab-btn" data-tab="ocr">OCR</button>
+      <button class="tab-btn" data-tab="redact">Redact</button>
     </nav>
     <button class="header-about-btn" id="about-btn">About</button>
     <button class="nav-hamburger" id="nav-hamburger" aria-label="Open tools menu">
@@ -858,6 +859,87 @@
       </div>
 
       <div class="tab-permalink"><a class="tab-permalink-link" data-permalink="ocr">🔗 Link to this tool</a></div>
+    </div>
+  </section>
+
+  <!-- ── Auto-Redactor ────────────────────────────────────────────── -->
+  <section id="panel-redact">
+    <div class="wrap">
+      <h2 class="panel-title">Auto-Redactor</h2>
+      <p class="panel-desc">Detect faces, people, and vehicles with one click, then blur, pixelate, or black out the regions for source protection. All processing stays in your browser.</p>
+
+      <div class="rd-layout">
+
+        <!-- Top card: file load + detect controls -->
+        <div class="tool-card">
+
+          <!-- Dropzone (hidden after file loads) -->
+          <div id="rd-dropzone-wrap">
+            <div id="rd-dropzone" class="dropzone" tabindex="0" role="button" aria-label="Drop image or video file">
+              <input type="file" id="rd-file-input" accept="image/*,video/*" style="display:none">
+              <span>Drop an image or video — or click to browse</span>
+              <span class="dropzone-hint">JPEG, PNG, WebP · MP4, MOV, WebM</span>
+            </div>
+          </div>
+
+          <!-- Loaded state (shown after file loads) -->
+          <div id="rd-loaded-bar" style="display:none">
+            <div class="rd-file-bar">
+              <span id="rd-file-name" class="rd-file-name"></span>
+              <button class="chip" id="rd-load-different">Load different file</button>
+            </div>
+
+            <div id="rd-video-note" class="rd-video-note" style="display:none">
+              Detection runs on the first frame. Redaction applies to the full video duration.
+            </div>
+
+            <div class="rd-detect-row">
+              <div>
+                <div class="chips-label">Auto-detect</div>
+                <div class="chips-row" id="rd-target-chips">
+                  <button class="chip active" data-target="people">Faces &amp; People</button>
+                  <button class="chip" data-target="vehicles">Vehicles</button>
+                  <button class="chip" data-target="all">All Objects</button>
+                </div>
+              </div>
+              <button class="action-btn rd-detect-action" id="rd-detect-btn" disabled>Detect</button>
+            </div>
+
+            <div id="rd-detect-status" class="rd-status" style="display:none"></div>
+          </div>
+        </div>
+
+        <!-- Canvas: image with interactive bounding boxes -->
+        <div id="rd-canvas-wrap" style="display:none">
+          <canvas id="rd-canvas"></canvas>
+        </div>
+
+        <!-- Bottom card: style chips + manual controls + export -->
+        <div id="rd-bottom-card" class="tool-card" style="display:none">
+          <div class="rd-bottom-row">
+            <div>
+              <div class="chips-label">Redaction style</div>
+              <div class="chips-row" id="rd-style-chips">
+                <button class="chip active" data-style="blur">Blur</button>
+                <button class="chip" data-style="pixelate">Pixelate</button>
+                <button class="chip" data-style="black">Solid black</button>
+              </div>
+            </div>
+            <div class="rd-edit-btns">
+              <button class="chip" id="rd-add-btn">+ Add region</button>
+              <button class="chip" id="rd-clear-btn">Clear all</button>
+            </div>
+          </div>
+
+          <p class="rd-hint">Click a box to select &nbsp;·&nbsp; drag to move &nbsp;·&nbsp; drag corners to resize &nbsp;·&nbsp; Delete to remove</p>
+
+          <button class="action-btn" id="rd-export-btn">Export Redacted File</button>
+          <div id="rd-export-status" class="rd-status" style="display:none"></div>
+        </div>
+
+      </div>
+
+      <div class="tab-permalink"><a class="tab-permalink-link" data-permalink="redact">🔗 Link to this tool</a></div>
     </div>
   </section>
 

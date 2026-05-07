@@ -1691,6 +1691,110 @@ mark.tr-match-current {
 .footer-links a { color: var(--muted); text-decoration: none; transition: color .15s; }
 .footer-links a:hover { color: var(--ink); }
 .footer-sep { color: var(--line); }
+
+/* ── Auto-Redactor ──────────────────────────────────────────────────────────── */
+
+.rd-layout {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  max-width: 900px;
+}
+
+.rd-file-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.rd-file-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.rd-video-note {
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--card2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  margin-bottom: 14px;
+}
+
+.rd-detect-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rd-detect-action {
+  flex-shrink: 0;
+  align-self: flex-end;
+  white-space: nowrap;
+}
+
+#rd-canvas-wrap {
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-align: center;
+  line-height: 0;
+}
+
+#rd-canvas {
+  max-width: 100%;
+  display: block;
+  cursor: default;
+  touch-action: none;
+}
+
+.rd-bottom-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.rd-edit-btns {
+  display: flex;
+  gap: 8px;
+  align-self: flex-end;
+  flex-shrink: 0;
+}
+
+.rd-hint {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.rd-status {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+@media (max-width: 480px) {
+  .rd-detect-row  { flex-direction: column; align-items: stretch; }
+  .rd-detect-action { width: 100%; }
+  .rd-bottom-row  { flex-direction: column; }
+  .rd-edit-btns   { align-self: flex-start; }
+}
+
 @media (max-width: 480px) {
   .site-footer { flex-direction: column; align-items: flex-start; gap: 6px; }
 }
