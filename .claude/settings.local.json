@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__playwright__browser_navigate",
+      "mcp__playwright__browser_evaluate",
+      "mcp__mcp-registry__search_mcp_registry",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__Claude_in_Chrome__browser_batch"
+    ]
+  }
+}

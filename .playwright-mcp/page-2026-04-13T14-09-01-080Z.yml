@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "Visuals Toolset" [level=1] [ref=e3]
+    - navigation [ref=e4]:
+      - button "Embed" [ref=e5] [cursor=pointer]
+      - button "Aspect Ratio" [ref=e6] [cursor=pointer]
+      - button "Crop & Export" [ref=e7] [cursor=pointer]
+      - button "Compressor" [ref=e8] [cursor=pointer]
+    - generic [ref=e9]: All processing happens in your browser
+  - generic [ref=e12]:
+    - generic [ref=e13] [cursor=pointer]:
+      - img [ref=e14]
+      - generic [ref=e17]: Drop a video here, or click to browse
+      - generic [ref=e18]: Supports MP4, MOV, MKV, WebM, AVI — all processing happens locally
+    - generic [ref=e19]:
+      - paragraph [ref=e20]: Mode
+      - generic [ref=e21]:
+        - generic [ref=e22] [cursor=pointer]:
+          - radio "Bitrate" [checked] [ref=e23]
+          - text: Bitrate
+        - generic [ref=e24] [cursor=pointer]:
+          - radio "Target size" [ref=e25]
+          - text: Target size
+    - generic [ref=e26]:
+      - paragraph [ref=e27]: Target bitrate
+      - generic [ref=e28]:
+        - button "1,500 kbps" [ref=e29] [cursor=pointer]
+        - button "2,000 kbps" [ref=e30] [cursor=pointer]
+        - button "2,250 kbps" [ref=e31] [cursor=pointer]
+        - button "2,500 kbps" [ref=e32] [cursor=pointer]
+        - button "3,000 kbps" [ref=e33] [cursor=pointer]
+        - button "5,000 kbps" [ref=e34] [cursor=pointer]
+        - button "Custom" [ref=e35] [cursor=pointer]
+    - generic [ref=e37]:
+      - paragraph [ref=e38]: Quality
+      - generic [ref=e39]:
+        - button "Low" [ref=e40] [cursor=pointer]
+        - button "Medium" [ref=e41] [cursor=pointer]
+        - button "High" [ref=e42] [cursor=pointer]
+      - paragraph [ref=e43]: Higher quality takes longer to encode.
+    - generic [ref=e44]:
+      - img [ref=e45]
+      - text: Audio is copied without re-encoding (lossless, fast)
+    - button "Compress & Download" [disabled] [ref=e50]

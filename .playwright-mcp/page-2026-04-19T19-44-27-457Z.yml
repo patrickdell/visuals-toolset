@@ -1,0 +1,124 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "Visuals Toolset" [level=1] [ref=e3]
+    - navigation [ref=e4]:
+      - button "Embed" [ref=e5] [cursor=pointer]
+      - button "Aspect Ratio" [ref=e6] [cursor=pointer]
+      - button "Crop & Export" [ref=e7] [cursor=pointer]
+      - button "Compressor" [ref=e8] [cursor=pointer]
+      - button "Trimmer" [ref=e9] [cursor=pointer]
+      - button "Extract Audio" [ref=e10] [cursor=pointer]
+      - button "Image Resize" [ref=e11] [cursor=pointer]
+      - button "Palette" [ref=e12] [cursor=pointer]
+      - button "Labeller" [ref=e13] [cursor=pointer]
+      - button "Waveform" [ref=e14] [cursor=pointer]
+    - generic [ref=e294]: All processing happens in your browser
+  - generic [ref=e249]:
+    - generic [ref=e250]:
+      - generic [ref=e251]:
+        - generic [ref=e252]:
+          - generic [ref=e253]: Output size
+          - generic [ref=e315]:
+            - button "9:16" [ref=e316] [cursor=pointer]
+            - button "1:1" [ref=e317] [cursor=pointer]
+            - button "4:5" [ref=e318] [cursor=pointer]
+            - button "16:9" [ref=e319] [cursor=pointer]
+        - generic [ref=e254]:
+          - generic [ref=e255]: Audio source
+          - generic [ref=e256] [cursor=pointer]: Drop audio or video file
+        - generic [ref=e257]:
+          - generic [ref=e258]: Background (optional)
+          - generic [ref=e259] [cursor=pointer]: Drop photo or video
+          - generic [ref=e320]:
+            - button "Colour" [ref=e321] [cursor=pointer]
+            - button "Transparent" [ref=e322] [cursor=pointer]
+          - generic [ref=e260]:
+            - generic [ref=e323]: BG colour
+            - textbox "BG colour" [ref=e261] [cursor=pointer]: "#111111"
+          - generic [ref=e262]:
+            - generic "Colour presets" [ref=e324]: 🎨
+            - generic "Black" [ref=e325] [cursor=pointer]
+            - generic "Near black" [ref=e326] [cursor=pointer]
+            - generic "White" [ref=e327] [cursor=pointer]
+            - generic "Red" [ref=e328] [cursor=pointer]
+            - generic "Green" [ref=e331] [cursor=pointer]
+            - generic "Blue" [ref=e334] [cursor=pointer]
+            - generic "Yellow" [ref=e336] [cursor=pointer]
+            - generic "Orange" [ref=e337] [cursor=pointer]
+            - generic "Purple" [ref=e338] [cursor=pointer]
+        - generic [ref=e263]:
+          - generic [ref=e264]: Style
+          - generic [ref=e339]:
+            - button "Bars" [ref=e340] [cursor=pointer]
+            - button "Mirrored" [ref=e341] [cursor=pointer]
+            - button "Line" [ref=e342] [cursor=pointer]
+        - generic [ref=e265]:
+          - generic [ref=e266]:
+            - generic [ref=e343]: Wave colour
+            - textbox "Wave colour" [ref=e267] [cursor=pointer]: "#ffffff"
+          - generic [ref=e268]:
+            - generic "Colour presets" [ref=e344]: 🎨
+            - generic "White" [ref=e345] [cursor=pointer]
+            - generic "Black" [ref=e346] [cursor=pointer]
+            - generic "Red" [ref=e347] [cursor=pointer]
+            - generic "Green" [ref=e351] [cursor=pointer]
+            - generic "Blue" [ref=e354] [cursor=pointer]
+            - generic "Yellow" [ref=e356] [cursor=pointer]
+            - generic "Orange" [ref=e357] [cursor=pointer]
+            - generic "Purple" [ref=e358] [cursor=pointer]
+          - generic [ref=e269]:
+            - generic [ref=e359]: Opacity
+            - slider "Opacity" [ref=e270]: "90"
+            - generic [ref=e360]: 90%
+        - generic [ref=e271]:
+          - generic [ref=e272]: Waveform height
+          - slider [ref=e273]: "40"
+        - generic [ref=e274]:
+          - generic [ref=e275]: Vertical position
+          - slider [ref=e276]: "50"
+          - generic [ref=e277]:
+            - generic [ref=e361]: Top
+            - generic [ref=e362]: Centre
+            - generic [ref=e363]: Bottom
+        - generic [ref=e278]:
+          - generic [ref=e279]: Bar width
+          - generic [ref=e364]:
+            - button "Fine" [ref=e365] [cursor=pointer]
+            - button "Normal" [ref=e366] [cursor=pointer]
+            - button "Thick" [ref=e367] [cursor=pointer]
+            - button "EQ" [ref=e368] [cursor=pointer]
+        - generic [ref=e280]:
+          - generic [ref=e281]: Bar decay
+          - generic [ref=e369]:
+            - button "Off" [ref=e370] [cursor=pointer]
+            - button "Fast" [ref=e371] [cursor=pointer]
+            - button "Smooth" [ref=e372] [cursor=pointer]
+            - button "Hold" [ref=e373] [cursor=pointer]
+          - paragraph [ref=e282]: Bars rise instantly but fall at the selected rate — like a VU meter.
+        - generic [ref=e283]:
+          - button "▶ Preview" [disabled] [ref=e284]
+          - button "Export MP4 (H.264)" [disabled] [ref=e285]
+          - button "Export WebM (VP9)" [disabled] [ref=e286]
+          - button "Export PNG sequence ↓" [disabled] [ref=e287]
+          - paragraph [ref=e288]: "PNG sequence: transparent frames, importable directly in Final Cut Pro, Premiere & After Effects. Audio exported separately."
+      - paragraph [ref=e291]: Drop an audio file to begin
+    - link "🔗 Link to this tool" [ref=e293] [cursor=pointer]:
+      - /url: "#waveform"
+  - navigation [ref=e299]:
+    - generic [ref=e300]:
+      - generic [ref=e301]: Tools
+      - button "Close menu" [ref=e302] [cursor=pointer]: ×
+    - button "Embed" [ref=e303] [cursor=pointer]
+    - button "Aspect Ratio" [ref=e304] [cursor=pointer]
+    - button "Crop & Export" [ref=e305] [cursor=pointer]
+    - button "Compressor" [ref=e306] [cursor=pointer]
+    - button "Trimmer" [ref=e307] [cursor=pointer]
+    - button "Extract Audio" [ref=e308] [cursor=pointer]
+    - button "Image Resize" [ref=e309] [cursor=pointer]
+    - button "Palette" [ref=e310] [cursor=pointer]
+    - button "Labeller" [ref=e311] [cursor=pointer]
+    - button "Waveform" [ref=e312] [cursor=pointer]
+    - generic [ref=e313]:
+      - strong [ref=e314]: Visuals Toolset
+      - text: A privacy-first collection of browser-based media tools.
+      - text: All processing happens locally — nothing is uploaded.

@@ -84,6 +84,7 @@ export function initWaveformRenderer() {
   let selectedStyle  = 'bars';
   let selectedBar    = BAR_WIDTHS[0];    // { px, gap }
   let selectedDecay  = DECAY_MODES[0];  // { rate }
+  let selectedQuality = 'balanced';      // 'fast' | 'balanced' | 'high'
   let decayBuffer    = null;            // Float32Array, one entry per bar
   let bgMode         = 'color';          // 'color' | 'transparent'
   let analyser       = null;
@@ -92,6 +93,36 @@ export function initWaveformRenderer() {
   let isPlaying      = false;
   let isExporting    = false;
   let staticPeaks    = null;
+
+  // ── Error notification system ────────────────────────────────────────────────
+  function showErrorNotification(message) {
+    const notif = document.createElement('div');
+    notif.style.cssText = `
+      position: fixed; bottom: 20px; right: 20px;
+      background: var(--danger); color: white;
+      padding: 12px 16px; border-radius: 4px;
+      font-size: 13px; max-width: 300px; z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    `;
+    notif.textContent = message;
+    document.body.appendChild(notif);
+    setTimeout(() => notif.remove(), 5000);
+  }
+
+  // ── Export quality presets ───────────────────────────────────────────────────
+  const qualityPresets = {
+    fast:     { videoBitrate: '5M', audioBitrate: '128k' },
+    balanced: { videoBitrate: '10M', audioBitrate: '192k' },
+    high:     { videoBitrate: '25M', audioBitrate: '320k' }
+  };
+
+  document.getElementById('wfr-quality-chips').querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('wfr-quality-chips').querySelectorAll('.chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedQuality = btn.dataset.quality;
+    });
+  });
 
   // ── Build size chips ────────────────────────────────────────────────────────
   SIZE_PRESETS.forEach((preset, i) => {
@@ -196,9 +227,41 @@ export function initWaveformRenderer() {
 
   // ── Advanced toggle ─────────────────────────────────────────────────────────
   advancedToggle.addEventListener('click', () => {
-    const open = advancedPanel.style.display !== 'none';
-    advancedPanel.style.display = open ? 'none' : '';
-    advancedToggle.textContent  = (open ? '▸' : '▾') + ' Advanced';
+    const open = advancedPanel.style.display === 'none';  // FIX: inverted logic
+    advancedPanel.style.display = open ? '' : 'none';
+    advancedToggle.textContent  = (open ? '▾' : '▸') + ' Advanced';
+  });
+
+  // ── Reset button ─────────────────────────────────────────────────────────────
+  document.getElementById('wfr-reset-btn').addEventListener('click', () => {
+    // Reset to defaults
+    selectedSize = SIZE_PRESETS[0];
+    selectedStyle = WAVE_STYLES[0];
+    selectedBar = BARS[0];
+    selectedDecay = DECAYS[0];
+    selectedQuality = 'balanced';
+    fgCol = '#3ecf8e';
+    waveOpacity.value = 100;
+    waveHeight.value = 100;
+    wavePos.value = 50;
+
+    // Update UI
+    document.getElementById('wfr-size-chips').children[0].click();
+    document.getElementById('wfr-style-chips').children[0].click();
+    document.getElementById('wfr-color-input').value = '#3ecf8e';
+    document.getElementById('wfr-opacity-chips').children[0].click();
+    document.getElementById('wfr-barwidth-chips').children[0].click();
+    document.getElementById('wfr-decay-chips').children[0].click();
+    document.getElementById('wfr-quality-chips').children[1].click(); // balanced preset (index 1)
+
+    opacityVal.textContent = '100%';
+    waveHeightVal.textContent = '100%';
+    wavePosVal.textContent = '50%';
+
+    bgMode = 'transparent';
+    document.getElementById('wfr-bg-chips').children[0].click();
+
+    redrawStatic();
   });
 
   // ── Initial canvas size ─────────────────────────────────────────────────────
@@ -246,6 +309,7 @@ export function initWaveformRenderer() {
       redrawStatic();
     } catch (e) {
       console.warn('[wfr] audio decode failed', e);
+      showErrorNotification('Failed to decode audio file. Try a different format.');
     }
 
     playBtn.disabled      = false;
@@ -449,18 +513,28 @@ export function initWaveformRenderer() {
   }
 
   function startPreview() {
-    if (!audioEl) return;
+    if (!audioBlobUrl) return;
     stopPreview();
 
+    // Create a fresh Audio element for this playback session (fixes re-run issue)
+    const playAudio = new Audio(audioBlobUrl);
+
     audioCtxLive = new (window.AudioContext || window.webkitAudioContext)();
-    const source = audioCtxLive.createMediaElementSource(audioEl);
+    const source = audioCtxLive.createMediaElementSource(playAudio);
     analyser = audioCtxLive.createAnalyser();
     analyser.fftSize = 2048;
     source.connect(analyser);
     analyser.connect(audioCtxLive.destination);
 
-    audioEl.currentTime = 0;
-    audioEl.play();
+    playAudio.currentTime = 0;
+
+    // Handle play promise for browser compatibility
+    playAudio.play()
+      .catch(e => {
+        console.warn('[wfr] audio playback failed:', e);
+        stopPreview();
+      });
+
     isPlaying = true;
     playBtn.textContent = '⏹ Stop';
 
@@ -478,7 +552,7 @@ export function initWaveformRenderer() {
     }
     animFrame = requestAnimationFrame(loop);
 
-    audioEl.onended = () => stopPreview();
+    playAudio.onended = () => stopPreview();
   }
 
   function stopPreview() {
@@ -549,13 +623,14 @@ export function initWaveformRenderer() {
       ];
       const supported = mp4Candidates.find(t => MediaRecorder.isTypeSupported(t));
       if (!supported) {
-        alert('H.264 MP4 export is not supported in this browser.\nTry Safari, or use Export WebM instead.');
+        showErrorNotification('H.264 MP4 not supported. Using WebM instead.');
         isExporting = false;
         exportMp4Btn.disabled = false;
         exportBtn.disabled    = false;
         playBtn.disabled      = false;
         progressWrap.style.display = 'none';
-        return;
+        // Fallback to WebM
+        return exportVideo('webm');
       }
       mimeType = supported;
       ext = 'mp4';
@@ -622,7 +697,7 @@ export function initWaveformRenderer() {
   async function exportPngSequence() {
     if (!audioBuffer) return;
     if (typeof JSZip === 'undefined') {
-      alert('JSZip not loaded — check your internet connection and reload.');
+      showErrorNotification('PNG export unavailable — check your internet connection and reload.');
       return;
     }
 
@@ -786,13 +861,19 @@ export function initWaveformRenderer() {
   }
 
   function wireDropzone(el, filter, handler) {
+    el.addEventListener('dragenter', e => e.preventDefault()); // Some browsers require this
     el.addEventListener('dragover',  e => { e.preventDefault(); el.classList.add('drag-over'); });
     el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
     el.addEventListener('drop', e => {
       e.preventDefault();
       el.classList.remove('drag-over');
-      const f = [...e.dataTransfer.files].find(filter);
-      if (f) handler(f);
+      try {
+        const files = e.dataTransfer.files || [];
+        const f = [...files].find(filter);
+        if (f) handler(f);
+      } catch (err) {
+        console.warn('Drag-drop failed:', err);
+      }
     });
   }
 }

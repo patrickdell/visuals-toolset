@@ -638,7 +638,10 @@
               <input id="wfr-audio-input" type="file" accept="audio/*,video/*" hidden>
             </div>
 
-            <p class="chips-label" style="margin-top:14px">Background <span class="wfr-optional">(optional)</span></p>
+            <p class="chips-label" style="margin-top:14px">
+              Background <span class="wfr-optional">(optional)</span>
+              <span style="font-size:11px; color: var(--muted); margin-left:4px;">Select mode below</span>
+            </p>
             <div id="wfr-bg-drop" class="wfr-mini-drop">
               <span id="wfr-bg-drop-text">Drop photo or video</span>
               <input id="wfr-bg-input" type="file" accept="image/*,video/*" hidden>
@@ -646,7 +649,7 @@
             <div class="wfr-bg-controls">
               <div class="chip-row" id="wfr-bg-chips"></div>
               <div id="wfr-bg-color-row" class="wfr-inline-color">
-                <input type="color" id="wfr-bg-color" value="#111111">
+                <input type="color" id="wfr-bg-color" value="#111111" title="Background colour">
               </div>
             </div>
             <div class="e-swatches" data-target="wfr-bg-color" id="wfr-bg-swatches" style="margin-top:8px">
@@ -708,12 +711,19 @@
               <span id="wfr-height-val">40%</span>
             </div>
 
-            <!-- Advanced toggle -->
-            <button class="wfr-advanced-toggle" id="wfr-advanced-toggle">▸ Advanced</button>
+            <!-- Advanced toggle & Reset button -->
+            <div style="display:flex; gap:8px; margin-top:8px;">
+              <button class="wfr-advanced-toggle" id="wfr-advanced-toggle" title="Show position, bar width, and decay controls">▸ Advanced</button>
+              <button id="wfr-reset-btn" class="chip" style="background:var(--card2); flex-shrink:0;" title="Reset all settings to defaults">↺ Reset</button>
+            </div>
             <div id="wfr-advanced" style="display:none">
+              <div class="wfr-notice" style="font-size:11px; color:var(--muted); margin-bottom:8px; padding:6px; background:var(--card2); border-radius:4px;">
+                💡 Decay modes only affect playback preview — static view shows raw audio data.
+              </div>
+
               <div class="wfr-slider-row" style="margin-top:4px">
-                <span>Position</span>
-                <input type="range" id="wfr-wave-pos" min="0" max="100" value="50">
+                <span title="Vertical position of waveform (0% = top, 100% = bottom)">Position</span>
+                <input type="range" id="wfr-wave-pos" min="0" max="100" value="50" title="Adjust vertical position">
                 <span id="wfr-pos-val">50%</span>
               </div>
               <div class="wfr-pos-labels" style="margin-bottom:12px"><span>Top</span><span>Centre</span><span>Bottom</span></div>
@@ -746,6 +756,17 @@
       <!-- ── Export bar ── -->
       <div class="wfr-export-bar">
         <button id="wfr-play-btn" class="export-btn-secondary wfr-export-play" disabled>▶ Preview</button>
+
+        <!-- Export quality presets -->
+        <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);">
+          <span>Quality:</span>
+          <div id="wfr-quality-chips" class="chip-row" style="gap:4px;">
+            <button class="chip active" data-quality="fast" title="Fast (5Mbps) — smaller file size">⚡ Fast</button>
+            <button class="chip" data-quality="balanced" title="Balanced (10Mbps) — good quality">⚖️ Balanced</button>
+            <button class="chip" data-quality="high" title="High (25Mbps) — highest quality">⭐ High</button>
+          </div>
+        </div>
+
         <div class="wfr-export-actions">
           <button id="wfr-export-mp4" class="export-btn"           disabled>Export MP4</button>
           <button id="wfr-export-btn" class="export-btn-secondary" disabled>WebM</button>

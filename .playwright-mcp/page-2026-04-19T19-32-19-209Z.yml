@@ -1,0 +1,143 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "Visuals Toolset" [level=1] [ref=e3]
+    - navigation [ref=e4]:
+      - button "Embed" [ref=e5] [cursor=pointer]
+      - button "Aspect Ratio" [ref=e6] [cursor=pointer]
+      - button "Crop & Export" [ref=e7] [cursor=pointer]
+      - button "Compressor" [ref=e8] [cursor=pointer]
+      - button "Trimmer" [ref=e9] [cursor=pointer]
+      - button "Extract Audio" [ref=e10] [cursor=pointer]
+      - button "Image Resize" [ref=e11] [cursor=pointer]
+      - button "Palette" [ref=e12] [cursor=pointer]
+      - button "Labeller" [ref=e13] [cursor=pointer]
+      - button "Waveform" [ref=e14] [cursor=pointer]
+    - generic [ref=e15]: All processing happens in your browser
+  - generic [ref=e17]:
+    - generic [ref=e18]:
+      - generic [ref=e19] [cursor=pointer]:
+        - img [ref=e20]
+        - generic [ref=e24]: Drop a video here, or click to browse
+        - generic [ref=e25]: MP4, MOV, MKV, WebM, AVI — audio track extracted in-browser
+      - generic [ref=e26]:
+        - paragraph [ref=e27]: Output format
+        - generic [ref=e28]:
+          - button "MP3 (192k)" [ref=e29] [cursor=pointer]
+          - button "AAC" [ref=e30] [cursor=pointer]
+          - button "WAV (lossless)" [ref=e31] [cursor=pointer]
+        - paragraph [ref=e32]: MP3 at 192 kbps — compatible everywhere.
+      - generic [ref=e33]:
+        - button "Choose output folder…" [ref=e34] [cursor=pointer]
+        - button "Clear queue" [disabled] [ref=e35]
+        - button "Extract Audio" [disabled] [ref=e36]
+    - link "🔗 Link to this tool" [ref=e38] [cursor=pointer]:
+      - /url: "#extract"
+  - generic [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]: Output size
+          - generic [ref=e45]:
+            - button "9:16" [ref=e46] [cursor=pointer]
+            - button "1:1" [ref=e47] [cursor=pointer]
+            - button "4:5" [ref=e48] [cursor=pointer]
+            - button "16:9" [ref=e49] [cursor=pointer]
+        - generic [ref=e50]:
+          - generic [ref=e51]: Audio source
+          - generic [ref=e52] [cursor=pointer]: Drop audio or video file
+        - generic [ref=e53]:
+          - generic [ref=e54]: Background (optional)
+          - generic [ref=e55] [cursor=pointer]: Drop photo or video
+          - generic [ref=e56]:
+            - button "Colour" [ref=e57] [cursor=pointer]
+            - button "Transparent" [ref=e58] [cursor=pointer]
+          - generic [ref=e59]:
+            - generic [ref=e60]: BG colour
+            - textbox "BG colour" [ref=e61] [cursor=pointer]: "#111111"
+          - generic [ref=e62]:
+            - generic [ref=e63]: "Presets:"
+            - generic "Black" [ref=e64] [cursor=pointer]
+            - generic "Near black" [ref=e65] [cursor=pointer]
+            - generic "White" [ref=e66] [cursor=pointer]
+            - generic "Red" [ref=e67] [cursor=pointer]
+            - generic "Green" [ref=e70] [cursor=pointer]
+            - generic "Blue" [ref=e73] [cursor=pointer]
+            - generic "Yellow" [ref=e75] [cursor=pointer]
+            - generic "Orange" [ref=e76] [cursor=pointer]
+            - generic "Purple" [ref=e77] [cursor=pointer]
+        - generic [ref=e78]:
+          - generic [ref=e79]: Style
+          - generic [ref=e80]:
+            - button "Bars" [ref=e81] [cursor=pointer]
+            - button "Mirrored" [ref=e82] [cursor=pointer]
+            - button "Line" [ref=e83] [cursor=pointer]
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - generic [ref=e86]: Wave colour
+            - textbox "Wave colour" [ref=e87] [cursor=pointer]: "#ffffff"
+          - generic [ref=e88]:
+            - generic [ref=e89]: "Presets:"
+            - generic "White" [ref=e90] [cursor=pointer]
+            - generic "Black" [ref=e91] [cursor=pointer]
+            - generic "Red" [ref=e92] [cursor=pointer]
+            - generic "Green" [ref=e96] [cursor=pointer]
+            - generic "Blue" [ref=e99] [cursor=pointer]
+            - generic "Yellow" [ref=e101] [cursor=pointer]
+            - generic "Orange" [ref=e102] [cursor=pointer]
+            - generic "Purple" [ref=e103] [cursor=pointer]
+          - generic [ref=e104]:
+            - generic [ref=e105]: Opacity
+            - slider "Opacity" [ref=e106]: "90"
+            - generic [ref=e107]: 90%
+        - generic [ref=e108]:
+          - generic [ref=e109]: Waveform height
+          - slider [ref=e110]: "40"
+        - generic [ref=e111]:
+          - generic [ref=e112]: Vertical position
+          - slider [ref=e113]: "50"
+          - generic [ref=e114]:
+            - generic [ref=e115]: Top
+            - generic [ref=e116]: Centre
+            - generic [ref=e117]: Bottom
+        - generic [ref=e118]:
+          - generic [ref=e119]: Bar width
+          - generic [ref=e120]:
+            - button "Fine" [ref=e121] [cursor=pointer]
+            - button "Normal" [ref=e122] [cursor=pointer]
+            - button "Thick" [ref=e123] [cursor=pointer]
+            - button "EQ" [ref=e124] [cursor=pointer]
+        - generic [ref=e125]:
+          - generic [ref=e126]: Bar decay
+          - generic [ref=e127]:
+            - button "Off" [ref=e128] [cursor=pointer]
+            - button "Fast" [ref=e129] [cursor=pointer]
+            - button "Smooth" [ref=e130] [cursor=pointer]
+            - button "Hold" [ref=e131] [cursor=pointer]
+          - paragraph [ref=e132]: Bars rise instantly but fall at the selected rate — like a VU meter.
+        - generic [ref=e133]:
+          - button "▶ Preview" [disabled] [ref=e134]
+          - button "Export MP4 (H.264)" [disabled] [ref=e135]
+          - button "Export WebM (VP9)" [disabled] [ref=e136]
+          - button "Export PNG sequence ↓" [disabled] [ref=e137]
+          - paragraph [ref=e138]: "PNG sequence: transparent frames, importable directly in Final Cut Pro, Premiere & After Effects. Audio exported separately."
+      - paragraph [ref=e141]: Drop an audio file to begin
+    - link "🔗 Link to this tool" [ref=e143] [cursor=pointer]:
+      - /url: "#waveform"
+  - navigation [ref=e144]:
+    - generic [ref=e145]:
+      - generic [ref=e146]: Tools
+      - button "Close menu" [ref=e147] [cursor=pointer]: ×
+    - button "Embed" [ref=e148] [cursor=pointer]
+    - button "Aspect Ratio" [ref=e149] [cursor=pointer]
+    - button "Crop & Export" [ref=e150] [cursor=pointer]
+    - button "Compressor" [ref=e151] [cursor=pointer]
+    - button "Trimmer" [ref=e152] [cursor=pointer]
+    - button "Extract Audio" [ref=e153] [cursor=pointer]
+    - button "Image Resize" [ref=e154] [cursor=pointer]
+    - button "Palette" [ref=e155] [cursor=pointer]
+    - button "Labeller" [ref=e156] [cursor=pointer]
+    - button "Waveform" [ref=e157] [cursor=pointer]
+    - generic [ref=e158]:
+      - strong [ref=e159]: Visuals Toolset
+      - text: A privacy-first collection of browser-based media tools.
+      - text: All processing happens locally — nothing is uploaded.

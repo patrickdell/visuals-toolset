@@ -1,0 +1,51 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - heading "Visuals Toolset" [level=1] [ref=e3]
+    - navigation [ref=e4]:
+      - button "Embed" [ref=e5] [cursor=pointer]
+      - button "Aspect Ratio" [ref=e6] [cursor=pointer]
+      - button "Crop & Export" [ref=e7] [cursor=pointer]
+      - button "Compressor" [ref=e8] [cursor=pointer]
+    - generic [ref=e9]: All processing happens in your browser
+  - generic [ref=e11]:
+    - generic [ref=e12]:
+      - button "YouTube" [ref=e13] [cursor=pointer]
+      - button "YouTube Shorts" [ref=e14] [cursor=pointer]
+      - button "TikTok" [ref=e15] [cursor=pointer]
+      - button "Vimeo" [ref=e16] [cursor=pointer]
+      - button "Google Maps" [ref=e17] [cursor=pointer]
+      - button "Instagram" [ref=e18] [cursor=pointer]
+      - button "Generic iframe" [ref=e19] [cursor=pointer]
+    - generic [ref=e22]:
+      - generic [ref=e23]: YouTube
+      - textbox "YouTube" [ref=e24]:
+        - /placeholder: https://www.youtube.com/watch?v=dQw4w9WgXcQ
+      - paragraph [ref=e25]: Paste a YouTube video URL
+      - generic [ref=e26]:
+        - generic [ref=e27]:
+          - generic [ref=e28]: Aspect ratio
+          - combobox "Aspect ratio" [ref=e29]:
+            - option "16:9 — Widescreen" [selected]
+            - option "4:3 — Standard"
+            - option "4:5 — Portrait"
+            - option "1:1 — Square"
+            - option "9:16 — Vertical"
+        - generic [ref=e30]:
+          - generic [ref=e31]: Background
+          - textbox "Background" [ref=e32] [cursor=pointer]: "#000000"
+        - button "Generate" [ref=e33] [cursor=pointer]
+      - generic [ref=e34]:
+        - generic [ref=e35]: "Presets:"
+        - generic "Black" [ref=e36] [cursor=pointer]
+        - generic "White" [ref=e37] [cursor=pointer]
+        - generic "Red" [ref=e38] [cursor=pointer]
+        - generic "Green" [ref=e43] [cursor=pointer]
+        - generic "Blue" [ref=e47] [cursor=pointer]
+        - generic "Yellow" [ref=e49] [cursor=pointer]
+      - generic [ref=e51]:
+        - generic [ref=e52]: Start time (optional)
+        - textbox "Start time (optional)" [ref=e53]:
+          - /placeholder: 0:00
+      - generic [ref=e54]:
+        - checkbox "Float right" [ref=e55] [cursor=pointer]
+        - generic [ref=e56] [cursor=pointer]: Float right
