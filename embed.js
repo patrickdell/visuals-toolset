@@ -12,16 +12,13 @@ const RATIOS = [
 ];
 
 const SERVICES = [
-  { id:'youtube',    label:'YouTube',        inputType:'url',   placeholder:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', hint:'Paste a YouTube video URL',                                           defaultRatio:'56.25%',  parse:parseYouTube   },
-  { id:'ytshorts',   label:'YouTube Shorts', inputType:'url',   placeholder:'https://www.youtube.com/shorts/dQw4w9WgXcQ',  hint:'Paste a YouTube Shorts URL',                                          defaultRatio:'177.78%', parse:parseYTShorts  },
-  { id:'tiktok',     label:'TikTok',         inputType:'url',   placeholder:'https://www.tiktok.com/@user/video/123',      hint:'Paste a TikTok video URL',                                             defaultRatio:'177.78%', parse:parseTikTok    },
-  { id:'vimeo',      label:'Vimeo',          inputType:'url',   placeholder:'https://vimeo.com/123456789',                 hint:'Paste a Vimeo video URL',                                              defaultRatio:'56.25%',  parse:parseVimeo     },
-  { id:'googlemaps', label:'Google Maps',    inputType:'embed', placeholder:'<iframe src="https://www.google.com/maps/embed?pb=..." ...></iframe>', hint:'Paste the embed code from Google Maps → Share → Embed a map', defaultRatio:'75%',    parse:parseGoogleMaps},
-  { id:'instagram',  label:'Instagram',      inputType:'url',   placeholder:'https://www.instagram.com/p/ABCdef123/',     hint:'Paste an Instagram post URL',                                          defaultRatio:'100%',    parse:parseInstagram },
-  { id:'twitter',    label:'X / Twitter',    inputType:'url',   placeholder:'https://x.com/user/status/1234567890123',    hint:'Paste an X or Twitter post URL',                                       special:'twitter',      parse:parseTwitter   },
-  { id:'spotify',    label:'Spotify',        inputType:'url',   placeholder:'https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC', hint:'Paste a Spotify track, album, playlist, podcast or episode URL', special:'spotify', parse:parseSpotify },
-  { id:'soundcloud', label:'SoundCloud',     inputType:'url',   placeholder:'https://soundcloud.com/artist/track-name',   hint:'Paste a SoundCloud track or playlist URL',                             special:'soundcloud',   parse:parseSoundCloud},
-  { id:'generic',    label:'Generic iframe', inputType:'url',   placeholder:'https://example.com/embed/123',              hint:'Paste the embed URL — it will be wrapped in a responsive container',  defaultRatio:'56.25%',  parse:parseGeneric   },
+  { id:'youtube',    label:'YouTube',        inputType:'url',   placeholder:'https://www.youtube.com/watch?v=dQw4w9WgXcQ', hint:'Paste a YouTube video URL',                                                                        defaultRatio:'56.25%',  parse:parseYouTube   },
+  { id:'ytshorts',   label:'YouTube Shorts', inputType:'url',   placeholder:'https://www.youtube.com/shorts/dQw4w9WgXcQ',  hint:'Paste a YouTube Shorts URL',                                                                       defaultRatio:'177.78%', parse:parseYTShorts  },
+  { id:'tiktok',     label:'TikTok',         inputType:'url',   placeholder:'https://www.tiktok.com/@user/video/123',      hint:'Paste a TikTok video URL. For more control and styling options, use TikTok\'s own embed code.',    defaultRatio:'177.78%', parse:parseTikTok    },
+  { id:'vimeo',      label:'Vimeo',          inputType:'url',   placeholder:'https://vimeo.com/123456789',                 hint:'Paste a Vimeo video URL',                                                                          defaultRatio:'56.25%',  parse:parseVimeo     },
+  { id:'instagram',  label:'Instagram',      inputType:'url',   placeholder:'https://www.instagram.com/p/ABCdef123/',     hint:'Paste an Instagram post URL',                                                                      defaultRatio:'100%',    parse:parseInstagram },
+  { id:'twitter',    label:'X',              inputType:'url',   placeholder:'https://x.com/user/status/1234567890123',    hint:'Paste an X post URL',                                                                              special:'twitter',      parse:parseTwitter   },
+  { id:'generic',    label:'Generic iframe', inputType:'url',   placeholder:'https://example.com/embed/123',              hint:'Paste the embed URL — it will be wrapped in a responsive container',                               defaultRatio:'56.25%',  parse:parseGeneric   },
 ];
 
 // ── Parsers ───────────────────────────────────────────────────────────────
@@ -77,8 +74,6 @@ function parseVimeo(input) {
   return m ? 'https://player.vimeo.com/video/' + m[1] : null;
 }
 
-function parseGoogleMaps(input) { return extractIframeSrc(input.trim()); }
-
 function parseInstagram(input) {
   input = input.trim();
   if (input.startsWith('<')) return extractIframeSrc(input);
@@ -103,13 +98,6 @@ function cleanYouTubeEmbedUrl(url) {
   } catch { return url; }
 }
 
-function isSoundCloudSet(url) {
-  try {
-    const parts = new URL(url).pathname.split('/').filter(Boolean);
-    return parts.length >= 2 && parts[1] === 'sets';
-  } catch { return false; }
-}
-
 // ── New service parsers ────────────────────────────────────────────────────
 
 function parseTwitter(input) {
@@ -120,33 +108,6 @@ function parseTwitter(input) {
   }
   const m = input.match(/(?:twitter|x)\.com\/[^/?#]+\/status\/(\d+)/);
   return m ? m[1] : null; // returns tweet ID string
-}
-
-function parseSpotify(input) {
-  input = input.trim();
-  if (input.startsWith('<')) return extractIframeSrc(input);
-  // Spotify URI: spotify:track:ID
-  const uri = input.match(/^spotify:([a-z]+):([A-Za-z0-9]+)$/);
-  if (uri) return `https://open.spotify.com/embed/${uri[1]}/${uri[2]}?utm_source=generator`;
-  try {
-    const url = new URL(input.startsWith('http') ? input : 'https://' + input);
-    if (url.hostname === 'open.spotify.com') {
-      const parts = url.pathname.split('/').filter(Boolean);
-      if (parts.length >= 2) {
-        const type = parts[0]; // track, album, playlist, episode, show
-        const id   = parts[1].split('?')[0];
-        return `https://open.spotify.com/embed/${type}/${id}?utm_source=generator`;
-      }
-    }
-  } catch (_) {}
-  return null;
-}
-
-function parseSoundCloud(input) {
-  input = input.trim();
-  if (input.startsWith('<')) return extractIframeSrc(input); // already embed URL
-  if (/soundcloud\.com/.test(input)) return input; // return as source URL for url= param
-  return null;
 }
 
 // ── Output builders ───────────────────────────────────────────────────────
@@ -266,41 +227,14 @@ function buildOptionsRow(svc) {
   </div>
   <button class="e-btn e-btn-primary" data-gen="twitter">Generate</button>
   <button class="e-btn-clear" data-clear="twitter">Clear</button>
-</div>`;
-  }
-  if (svc.special === 'spotify') {
-    return `<div class="e-row">
-  <div class="e-field">
-    <label for="eh-spotify">Player size</label>
-    <select id="eh-spotify">
-      <option value="80">80px — Mini player</option>
-      <option value="152">152px — Compact</option>
-      <option value="352" selected>352px — Standard</option>
-    </select>
-  </div>
-  <button class="e-btn e-btn-primary" data-gen="spotify">Generate</button>
-  <button class="e-btn-clear" data-clear="spotify">Clear</button>
-</div>`;
-  }
-  if (svc.special === 'soundcloud') {
-    return `<div class="e-row">
-  <div class="e-color-field">
-    <label for="eb-soundcloud">Accent colour</label>
-    <input type="color" id="eb-soundcloud" value="#da161f">
-  </div>
-  <button class="e-btn e-btn-primary" data-gen="soundcloud">Generate</button>
-  <button class="e-btn-clear" data-clear="soundcloud">Clear</button>
-</div>`;
+</div>
+<p class="e-hint" style="margin-top:6px">Standard works for article column width. Narrow can be floated right as a sidebar embed.</p>`;
   }
   // Standard
   return `<div class="e-row">
   <div class="e-field">
     <label for="er-${svc.id}">Aspect ratio</label>
     <select id="er-${svc.id}">${buildRatioOptions(svc.defaultRatio)}</select>
-  </div>
-  <div class="e-color-field">
-    <label for="eb-${svc.id}">Background</label>
-    <input type="color" id="eb-${svc.id}" value="#000000">
   </div>
   <button class="e-btn e-btn-primary" data-gen="${svc.id}">Generate</button>
   <button class="e-btn-clear" data-clear="${svc.id}">Clear</button>
@@ -334,27 +268,7 @@ export function initEmbed() {
     </div>
   </div>` : '';
 
-    // Show colour swatches for services with a colour picker (standard + soundcloud)
-    const showSwatches = !svc.special || svc.special === 'soundcloud';
-    const swatchTarget  = `eb-${svc.id}`;
-    const swatchesHtml  = showSwatches ? `
-  <div class="e-swatches" data-target="${swatchTarget}">
-    <span class="e-swatch-label" title="Colour presets">🎨</span>
-    <span class="e-swatch" style="background:#000000" title="Black" data-color="#000000"></span>
-    <span class="e-swatch" style="background:#ffffff;border-color:rgba(0,0,0,0.25)" title="White" data-color="#ffffff"></span>
-    <span class="e-swatch" style="background:#D50202" title="Red" data-color="#D50202"></span>
-    <span class="e-swatch" style="background:#CA0101" data-color="#CA0101"></span>
-    <span class="e-swatch" style="background:#AC0000" data-color="#AC0000"></span>
-    <span class="e-swatch" style="background:#880000" data-color="#880000"></span>
-    <span class="e-swatch" style="background:#FAE1E1" data-color="#FAE1E1"></span>
-    <span class="e-swatch" style="background:#268626" title="Green" data-color="#268626"></span>
-    <span class="e-swatch" style="background:#1C731C" data-color="#1C731C"></span>
-    <span class="e-swatch" style="background:#0B560D" data-color="#0B560D"></span>
-    <span class="e-swatch" style="background:#E5F0E5" data-color="#E5F0E5"></span>
-    <span class="e-swatch" style="background:#096080" title="Blue" data-color="#096080"></span>
-    <span class="e-swatch" style="background:#E5EFF1" data-color="#E5EFF1"></span>
-    <span class="e-swatch" style="background:#F8EC88" title="Yellow" data-color="#F8EC88"></span>
-  </div>` : '';
+    const swatchesHtml = '';
 
     // Float-right option: hide for twitter (blockquote doesn't float cleanly)
     const floatHtml = svc.special !== 'twitter' ? `
@@ -496,40 +410,9 @@ export function initEmbed() {
       return;
     }
 
-    // ── Spotify ───────────────────────────────────────────────────────────
-    if (svcId === 'spotify') {
-      const height     = document.getElementById('eh-spotify')?.value ?? '352';
-      const floatRight = document.getElementById('ef-spotify')?.checked;
-      const iframe     = `<iframe style="border-radius:12px" src="${src}" width="100%" height="${height}" frameborder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>`;
-      codeEl.value     = floatRight
-        ? `<div style="float:right;clear:both;max-width:340px;margin:0 0 10px 20px">\n${iframe}\n</div>`
-        : iframe;
-      previewEl.innerHTML = iframe;
-      outputEl.classList.add('visible');
-      codeEl.select();
-      return;
-    }
-
-    // ── SoundCloud ────────────────────────────────────────────────────────
-    if (svcId === 'soundcloud') {
-      const color      = (document.getElementById('eb-soundcloud')?.value ?? '#da161f').replace('#', '');
-      const height     = isSoundCloudSet(src) ? 450 : 166;
-      const floatRight = document.getElementById('ef-soundcloud')?.checked;
-      const embedUrl   = `https://w.soundcloud.com/player/?url=${encodeURIComponent(src)}&color=%23${color}&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true`;
-      const iframe     = `<iframe width="100%" height="${height}" scrolling="no" frameborder="no" allow="autoplay" src="${embedUrl}"></iframe>`;
-      codeEl.value     = floatRight
-        ? `<div style="float:right;clear:both;max-width:340px;margin:0 0 10px 20px">\n${iframe}\n</div>`
-        : iframe;
-      previewEl.innerHTML = iframe;
-      outputEl.classList.add('visible');
-      codeEl.select();
-      return;
-    }
-
     // ── Standard responsive embed ─────────────────────────────────────────
     const ratioEl       = document.getElementById('er-' + svcId);
     const paddingBottom = ratioEl.value;
-    const bgColor       = document.getElementById('eb-' + svcId).value;
 
     if (svcId === 'youtube') {
       const secs = timeToSeconds(document.getElementById('est-youtube').value);
@@ -538,8 +421,8 @@ export function initEmbed() {
 
     const floatRight = document.getElementById('ef-' + svcId).checked;
 
-    codeEl.value = buildOutput(src, paddingBottom, bgColor, floatRight);
-    renderPreview(previewEl, src, paddingBottom, bgColor);
+    codeEl.value = buildOutput(src, paddingBottom, null, floatRight);
+    renderPreview(previewEl, src, paddingBottom, null);
     outputEl.classList.add('visible');
     codeEl.select();
   }
