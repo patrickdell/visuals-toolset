@@ -1,7 +1,7 @@
 /**
  * waveform-renderer.js — animated waveform over image/video, export as WebM.
  * Supports bars, mirrored bars, and line styles.
- * Social size presets: 9:16, 1:1, 4:5, 16:9.
+ * Social size presets: 9:16, 1:1, 4:5, 4:3, 3:2, 16:9.
  * Transparent background option for use in NLEs (Final Cut Pro, Premiere).
  */
 
@@ -9,6 +9,8 @@ const SIZE_PRESETS = [
   { label: '9:16',  w: 1080, h: 1920 },
   { label: '1:1',   w: 1080, h: 1080 },
   { label: '4:5',   w: 1080, h: 1350 },
+  { label: '4:3',   w: 1440, h: 1080 },
+  { label: '3:2',   w: 1620, h: 1080 },
   { label: '16:9',  w: 1920, h: 1080 },
 ];
 
@@ -50,6 +52,8 @@ export function initWaveformRenderer() {
   const bgChipsEl       = document.getElementById('wfr-bg-chips');
   const bgColorRow      = document.getElementById('wfr-bg-color-row');
   const bgColorPicker   = document.getElementById('wfr-bg-color');
+  const includeWaveformToggle = document.getElementById('wfr-include-waveform');
+  const waveformControlsWrap = document.getElementById('wfr-waveform-controls');
   const styleChipsEl    = document.getElementById('wfr-style-chips');
   const barWidthChipsEl = document.getElementById('wfr-barwidth-chips');
   const decayChipsEl    = document.getElementById('wfr-decay-chips');
@@ -93,6 +97,7 @@ export function initWaveformRenderer() {
   let isPlaying      = false;
   let isExporting    = false;
   let staticPeaks    = null;
+  let includeWaveform = true;
 
   // ── Error notification system ────────────────────────────────────────────────
   function showErrorNotification(message) {
@@ -207,6 +212,13 @@ export function initWaveformRenderer() {
     swatch.classList.add('e-swatch--active');
     const target = document.getElementById(swatchGroup.dataset.target);
     if (target) { target.value = swatch.dataset.color; target.dispatchEvent(new Event('input')); }
+  });
+
+  // ── Include waveform toggle ─────────────────────────────────────────────────
+  includeWaveformToggle.addEventListener('change', () => {
+    includeWaveform = includeWaveformToggle.checked;
+    waveformControlsWrap.style.display = includeWaveform ? '' : 'none';
+    redrawStatic();
   });
 
   // ── Controls → redraw ───────────────────────────────────────────────────────
@@ -367,7 +379,7 @@ export function initWaveformRenderer() {
     const W = canvas.width, H = canvas.height;
     ctx.clearRect(0, 0, W, H);
     drawBg(ctx, W, H);
-    if (staticPeaks) drawStaticWave(ctx, W, H, staticPeaks);
+    if (includeWaveform && staticPeaks) drawStaticWave(ctx, W, H, staticPeaks);
   }
 
   function drawBg(c, W, H, forExport = false) {
@@ -547,7 +559,7 @@ export function initWaveformRenderer() {
       const W = canvas.width, H = canvas.height;
       ctx.clearRect(0, 0, W, H);
       drawBg(ctx, W, H);
-      drawLiveWave(ctx, W, H, dataArray);
+      if (includeWaveform) drawLiveWave(ctx, W, H, dataArray);
       animFrame = requestAnimationFrame(loop);
     }
     animFrame = requestAnimationFrame(loop);
@@ -669,7 +681,7 @@ export function initWaveformRenderer() {
       expAnalyser.getByteTimeDomainData(dataArray);
       ec.clearRect(0, 0, EW, EH);
       drawBg(ec, EW, EH, true);
-      drawLiveWave(ec, EW, EH, dataArray);
+      if (includeWaveform) drawLiveWave(ec, EW, EH, dataArray);
 
       elapsed = (performance.now() - startTime) / 1000;
       const pct = duration > 0 ? Math.min(elapsed / duration, 1) : 0;
@@ -747,7 +759,7 @@ export function initWaveformRenderer() {
       // Draw frame
       ec.clearRect(0, 0, EW, EH);
       drawBg(ec, EW, EH, true);
-      drawLiveWave(ec, EW, EH, frameData);
+      if (includeWaveform) drawLiveWave(ec, EW, EH, frameData);
 
       // Collect PNG blob
       const pngBlob = await new Promise(res => off.toBlob(res, 'image/png'));

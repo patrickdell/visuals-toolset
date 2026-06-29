@@ -675,6 +675,12 @@
           <div class="card wfr-card">
             <p class="wfr-card-title">Waveform</p>
 
+            <div class="e-float-row" style="margin-top:0;margin-bottom:12px;">
+              <input type="checkbox" id="wfr-include-waveform" checked>
+              <label for="wfr-include-waveform" style="margin:0;cursor:pointer;">Include waveform overlay</label>
+            </div>
+
+            <div id="wfr-waveform-controls">
             <p class="chips-label">Style</p>
             <div class="chip-row" id="wfr-style-chips"></div>
 
@@ -733,6 +739,7 @@
 
               <p class="chips-label" style="margin-top:12px">Bar decay</p>
               <div class="chip-row" id="wfr-decay-chips"></div>
+            </div>
             </div>
           </div>
 
